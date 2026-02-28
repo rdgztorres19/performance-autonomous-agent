@@ -2,8 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatOpenAI } from '@langchain/openai';
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import { createAgent } from 'langchain';
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
 
@@ -110,8 +109,8 @@ export class AgentService {
       const langchainTools = wrapAllToolsForLangChain(this.toolRegistry.getAll());
       const agentTools = [...langchainTools, ...this.createAgentMetaTools(sessionId, llm)];
 
-      const agent = createReactAgent({
-        llm,
+      const agent = createAgent({
+        model: llm,
         tools: agentTools,
       });
 
@@ -122,10 +121,12 @@ export class AgentService {
 
       const result = await agent.invoke({
         messages: [
-          new SystemMessage(SYSTEM_PROMPT),
-          new HumanMessage(
-            'Start a comprehensive performance scan of this Linux system. Begin with high-level system metrics, then drill down into any areas showing potential issues. Report any problems you find.',
-          ),
+          { role: 'system', content: SYSTEM_PROMPT },
+          {
+            role: 'user',
+            content:
+              'Start a comprehensive performance scan of this Linux system. Begin with high-level system metrics, then drill down into any areas showing potential issues. Report any problems you find.',
+          },
         ],
       });
 
