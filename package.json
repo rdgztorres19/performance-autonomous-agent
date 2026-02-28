@@ -1,0 +1,18 @@
+{
+  "name": "performance-autonomous-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI-powered autonomous agent for performance diagnosis on Linux systems",
+  "scripts": {
+    "backend:dev": "cd backend && npm run start:dev",
+    "backend:build": "cd backend && npm run build",
+    "backend:start": "cd backend && npm run start:prod",
+    "frontend:dev": "cd frontend && npx ng serve",
+    "frontend:build": "cd frontend && npx ng build",
+    "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
+    "build": "npm run backend:build && npm run frontend:build"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
