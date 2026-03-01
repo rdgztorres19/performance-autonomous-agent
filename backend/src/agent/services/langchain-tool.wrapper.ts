@@ -53,15 +53,19 @@ export function wrapToolForLangChain(
     description: metadata.description,
     schema,
     func: async (input: Record<string, unknown>) => {
+      const result = await tool.execute(input);
       if (ctx) {
         await ctx.timelineService.logToolExecution(
           ctx.sessionId,
           metadata.name,
           metadata.description,
-          { input },
+          {
+            input,
+            output: result.data,
+            visualization: tool.getVisualization(),
+          },
         );
       }
-      const result = await tool.execute(input);
       return JSON.stringify(result);
     },
   });

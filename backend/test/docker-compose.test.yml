@@ -1,0 +1,10 @@
+services:
+  linux-ssh:
+    build:
+      context: .
+      dockerfile: Dockerfile.test-ssh
+    container_name: perf-agent-test-ssh
+    hostname: test-linux
+    ports:
+      - "2222:2222"
+    privileged: true

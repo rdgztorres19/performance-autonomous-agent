@@ -1,8 +1,24 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class DiskThroughputTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Disk Throughput by Device',
+        unit: 'MB/s',
+        arrayField: 'devices',
+        labelField: 'device',
+        valueFields: [
+          { field: 'readMBps', label: 'Read' },
+          { field: 'writeMBps', label: 'Write' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'disk_throughput',

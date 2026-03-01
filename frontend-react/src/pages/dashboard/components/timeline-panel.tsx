@@ -13,6 +13,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { MetricsDialog } from '@/components/metrics/metrics-dialog';
 import { useSessionStore } from '@/hooks/use-session-store';
 import {
   Info,
@@ -22,10 +23,11 @@ import {
   Wrench,
   MessageSquare,
   ChevronDown,
+  BarChart3,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TimelineEntryType } from '@/types';
+import type { TimelineEntryType, VisualizationSpec } from '@/types';
 
 const typeConfig: Record<
   TimelineEntryType,
@@ -63,7 +65,7 @@ const typeConfig: Record<
     icon: Brain,
     iconBg: 'bg-blue-100 dark:bg-blue-950',
     iconColor: 'text-blue-600 dark:text-blue-400',
-    badgeVariant: 'default',
+    badgeVariant: 'primary',
   },
   tool_execution: {
     label: 'Tool',
@@ -87,6 +89,11 @@ export function TimelinePanel() {
   const timeline = useSessionStore((s) => s.timeline);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [metricsEntry, setMetricsEntry] = useState<{
+    toolName: string;
+    data: Record<string, unknown>;
+    visualization: VisualizationSpec;
+  } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -141,9 +148,24 @@ export function TimelinePanel() {
                       </div>
                       <div className="ps-3 pb-6 grow min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <Badge variant={cfg.badgeVariant} className="text-2xs shrink-0">
-                            {cfg.label}
-                          </Badge>
+                          <div className="flex items-center gap-1.5">
+                            <Badge variant={cfg.badgeVariant} className="text-2xs shrink-0">
+                              {cfg.label}
+                            </Badge>
+                            {entry.type === 'tool_execution' && entry.metadata?.visualization && entry.metadata?.output && (
+                              <button
+                                onClick={() => setMetricsEntry({
+                                  toolName: String(entry.metadata?.toolName ?? ''),
+                                  data: entry.metadata!.output as Record<string, unknown>,
+                                  visualization: entry.metadata!.visualization as VisualizationSpec,
+                                })}
+                                className="p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                title="View metrics chart"
+                              >
+                                <BarChart3 className="h-3.5 w-3.5" />
+                              </button>
+                            )}
+                          </div>
                           <span className="text-2xs text-muted-foreground whitespace-nowrap">
                             {new Date(entry.timestamp).toLocaleTimeString()}
                           </span>
@@ -191,6 +213,16 @@ export function TimelinePanel() {
           </div>
         </ScrollArea>
       </CardContent>
+
+      {metricsEntry && (
+        <MetricsDialog
+          open={!!metricsEntry}
+          onOpenChange={(open) => { if (!open) setMetricsEntry(null); }}
+          toolName={metricsEntry.toolName}
+          data={metricsEntry.data}
+          visualization={metricsEntry.visualization}
+        />
+      )}
     </Card>
   );
 }

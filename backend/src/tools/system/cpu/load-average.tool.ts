@@ -1,8 +1,23 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class LoadAverageTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Load Average (per CPU)',
+        unit: '',
+        slices: [
+          { label: '1 min', field: 'loadPerCpu1m' },
+          { label: '5 min', field: 'loadPerCpu5m' },
+          { label: '15 min', field: 'loadPerCpu15m' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'load_average',

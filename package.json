@@ -10,7 +10,13 @@
     "frontend:dev": "cd frontend-react && npm run dev -- --port 4200",
     "frontend:build": "cd frontend-react && npm run build",
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
-    "build": "npm run backend:build && npm run frontend:build"
+    "build": "npm run backend:build && npm run frontend:build",
+    "test": "cd backend && npm test",
+    "test:watch": "cd backend && npm run test:watch",
+    "test:cov": "cd backend && npm run test:cov",
+    "test:integration:up": "cd backend && npm run test:integration:up",
+    "test:integration": "cd backend && npm run test:integration",
+    "test:integration:down": "cd backend && npm run test:integration:down"
   },
   "engines": {
     "node": ">=20.0.0"

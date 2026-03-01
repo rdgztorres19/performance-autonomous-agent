@@ -4,12 +4,17 @@ import type {
   ToolMetadata,
   ToolResult,
   ToolCategory,
+  VisualizationSpec,
 } from '../common/interfaces/index.js';
 
 export abstract class BaseTool implements PerformanceTool {
   constructor(protected readonly connection: Connection) {}
 
   abstract getMetadata(): ToolMetadata;
+
+  getVisualization(): VisualizationSpec | undefined {
+    return undefined;
+  }
 
   async execute(params: Record<string, unknown>): Promise<ToolResult> {
     const metadata = this.getMetadata();

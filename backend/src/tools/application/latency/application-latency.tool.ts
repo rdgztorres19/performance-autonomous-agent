@@ -1,6 +1,6 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 /**
  * Gathers per-process latency indicators using OS-level commands only:
@@ -12,6 +12,20 @@ import type { ToolMetadata } from '../../../common/interfaces/index.js';
  * application-level instrumentation.
  */
 export class ApplicationLatencyTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'TCP Latency Summary',
+        unit: 'ms',
+        slices: [
+          { label: 'Avg RTT', field: 'summary.avgRttMs' },
+          { label: 'Max RTT', field: 'summary.maxRttMs' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'application_latency',

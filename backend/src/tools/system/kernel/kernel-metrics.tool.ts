@@ -1,8 +1,20 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class KernelMetricsTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'radialBar',
+        title: 'File Descriptor Usage',
+        unit: '%',
+        gaugeField: 'fdUsagePercent',
+        gaugeMax: 100,
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'kernel_metrics',

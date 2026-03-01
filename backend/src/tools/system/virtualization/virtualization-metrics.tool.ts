@@ -1,8 +1,22 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class VirtualizationMetricsTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Virtualization Metrics',
+        unit: '',
+        slices: [
+          { label: 'Steal %', field: 'stealPercent' },
+          { label: 'Throttled Count', field: 'throttledCount' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'virtualization_metrics',

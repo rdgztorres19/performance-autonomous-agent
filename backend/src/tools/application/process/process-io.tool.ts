@@ -1,8 +1,28 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class ProcessIoTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Process I/O',
+        unit: 'MB',
+        slices: [
+          { label: 'Read', field: 'readMb', color: '#3b82f6' },
+          { label: 'Write', field: 'writeMb', color: '#ef4444' },
+        ],
+      }, {
+        type: 'radialBar',
+        title: 'FD Usage',
+        unit: '%',
+        gaugeField: 'fdUsagePercent',
+        gaugeMax: 100,
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'process_io',

@@ -1,8 +1,24 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class NetworkThroughputTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Network Throughput by Interface',
+        unit: 'Mbps',
+        arrayField: 'interfaces',
+        labelField: 'interface',
+        valueFields: [
+          { field: 'rxMbps', label: 'RX' },
+          { field: 'txMbps', label: 'TX' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'network_throughput',

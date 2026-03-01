@@ -1,6 +1,6 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 /**
  * Gathers per-process error indicators using OS-level commands:
@@ -12,6 +12,20 @@ import type { ToolMetadata } from '../../../common/interfaces/index.js';
  *   - Recent kernel messages related to process crashes
  */
 export class ApplicationErrorsTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Error Indicators',
+        unit: 'count',
+        slices: [
+          { label: 'TCP Retransmits', field: 'summary.totalTcpRetransmits' },
+          { label: 'Error Indicators', field: 'summary.errorIndicators' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'application_errors',

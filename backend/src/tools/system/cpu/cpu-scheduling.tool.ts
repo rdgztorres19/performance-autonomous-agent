@@ -1,8 +1,22 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class CpuSchedulingTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'CPU Scheduling',
+        unit: 'count',
+        slices: [
+          { label: 'Yield Count', field: 'totalYieldCount' },
+          { label: 'Schedule Count', field: 'totalScheduleCount' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'cpu_scheduling',

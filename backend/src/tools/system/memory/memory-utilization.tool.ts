@@ -1,8 +1,33 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class MemoryUtilizationTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [
+        {
+          type: 'donut',
+          title: 'Memory Usage',
+          unit: 'MB',
+          slices: [
+            { label: 'Used', field: 'usedMb', color: '#3b82f6' },
+            { label: 'Buffers', field: 'buffersMb', color: '#8b5cf6' },
+            { label: 'Cached', field: 'cachedMb', color: '#14b8a6' },
+            { label: 'Free', field: 'freeMb', color: '#6b7280' },
+          ],
+        },
+        {
+          type: 'radialBar',
+          title: 'Memory Utilization',
+          unit: '%',
+          gaugeField: 'usedPercent',
+          gaugeMax: 100,
+        },
+      ],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'memory_utilization',

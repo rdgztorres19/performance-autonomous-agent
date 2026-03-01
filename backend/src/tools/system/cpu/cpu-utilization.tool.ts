@@ -1,8 +1,28 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class CpuUtilizationTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'donut',
+        title: 'CPU Utilization Breakdown',
+        unit: '%',
+        slices: [
+          { label: 'User', field: 'userPercent', color: '#3b82f6' },
+          { label: 'System', field: 'systemPercent', color: '#ef4444' },
+          { label: 'I/O Wait', field: 'iowaitPercent', color: '#f59e0b' },
+          { label: 'Nice', field: 'nicePercent', color: '#8b5cf6' },
+          { label: 'IRQ', field: 'irqPercent', color: '#ec4899' },
+          { label: 'Soft IRQ', field: 'softirqPercent', color: '#14b8a6' },
+          { label: 'Steal', field: 'stealPercent', color: '#f97316' },
+          { label: 'Idle', field: 'idlePercent', color: '#6b7280' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'cpu_utilization',

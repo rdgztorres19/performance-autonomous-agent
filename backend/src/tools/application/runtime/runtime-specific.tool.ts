@@ -1,6 +1,6 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 /**
  * Detects the runtime type of a process and collects runtime-specific metrics:
@@ -26,6 +26,22 @@ import type { ToolMetadata } from '../../../common/interfaces/index.js';
  * Falls back to generic metrics if runtime cannot be determined.
  */
 export class RuntimeSpecificTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Process Resources',
+        unit: 'MB',
+        slices: [
+          { label: 'VM Size', field: 'process.VmSizeMb' },
+          { label: 'RSS', field: 'process.VmRSSMb' },
+          { label: 'Swap', field: 'process.VmSwapMb' },
+          { label: 'Peak', field: 'process.VmPeakMb' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'runtime_specific',

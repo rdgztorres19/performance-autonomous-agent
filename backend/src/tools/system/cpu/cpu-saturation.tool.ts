@@ -1,8 +1,25 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class CpuSaturationTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'CPU Saturation Metrics',
+        unit: '/sec',
+        slices: [
+          { label: 'Context Switches', field: 'contextSwitchesPerSec' },
+          { label: 'Interrupts', field: 'interruptsPerSec' },
+          { label: 'Soft IRQs', field: 'softirqsPerSec' },
+          { label: 'Run Queue', field: 'runQueueLength' },
+          { label: 'Blocked', field: 'blockedProcesses' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'cpu_saturation',

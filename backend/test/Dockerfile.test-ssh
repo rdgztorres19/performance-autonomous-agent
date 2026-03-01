@@ -1,0 +1,19 @@
+FROM ubuntu:24.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssh-server \
+    procps \
+    iproute2 \
+    sysstat \
+    coreutils \
+    && rm -rf /var/lib/apt/lists/* \
+    && echo 'root:testpass' | chpasswd \
+    && useradd -m -s /bin/bash testuser \
+    && echo 'testuser:testpass' | chpasswd \
+    && sed -i 's/#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/#PasswordAuthentication.*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && echo 'Port 2222' >> /etc/ssh/sshd_config
+
+EXPOSE 2222
+
+CMD mkdir -p /run/sshd && /usr/sbin/sshd -D -e

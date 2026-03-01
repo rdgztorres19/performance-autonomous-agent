@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+
+
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
+import { MetricsDialog } from '@/components/metrics/metrics-dialog';
 import { useSessionStore } from '@/hooks/use-session-store';
 import {
   Info,
@@ -16,10 +17,11 @@ import {
   Wrench,
   MessageSquare,
   ChevronRight,
+  BarChart3,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { TimelineEntryType } from '@/types';
+import type { TimelineEntryType, VisualizationSpec } from '@/types';
 
 const typeConfig: Record<
   TimelineEntryType,
@@ -37,6 +39,11 @@ export function WorkspaceTimeline() {
   const timeline = useSessionStore((s) => s.timeline);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [metricsEntry, setMetricsEntry] = useState<{
+    toolName: string;
+    data: Record<string, unknown>;
+    visualization: VisualizationSpec;
+  } | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -126,11 +133,38 @@ export function WorkspaceTimeline() {
                   </p>
                 )}
               </div>
+
+              {/* Chart button for tool executions with visualization data */}
+              {entry.type === 'tool_execution' && entry.metadata?.visualization && entry.metadata?.output && (
+                <div className="shrink-0 py-2 pe-3">
+                  <button
+                    onClick={() => setMetricsEntry({
+                      toolName: String(entry.metadata?.toolName ?? ''),
+                      data: entry.metadata!.output as Record<string, unknown>,
+                      visualization: entry.metadata!.visualization as VisualizationSpec,
+                    })}
+                    className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                    title="View metrics chart"
+                  >
+                    <BarChart3 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
         <div ref={bottomRef} />
       </div>
+
+      {metricsEntry && (
+        <MetricsDialog
+          open={!!metricsEntry}
+          onOpenChange={(open) => { if (!open) setMetricsEntry(null); }}
+          toolName={metricsEntry.toolName}
+          data={metricsEntry.data}
+          visualization={metricsEntry.visualization}
+        />
+      )}
     </ScrollArea>
   );
 }

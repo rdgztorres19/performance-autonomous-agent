@@ -17,7 +17,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:integration:up": "docker compose -f test/docker-compose.test.yml up -d && echo 'Waiting for SSH...' && sleep 8",
+    "test:integration": "jest --config ./test/jest-e2e.json --testPathPatterns=tools-integration",
+    "test:integration:down": "docker compose -f test/docker-compose.test.yml down"
   },
   "dependencies": {
     "@langchain/core": "^1.1.29",
@@ -74,7 +77,15 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": [
+        "ts-jest",
+        {
+          "tsconfig": "tsconfig.json"
+        }
+      ]
+    },
+    "moduleNameMapper": {
+      "^(\\.\\.?/.*)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

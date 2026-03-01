@@ -1,6 +1,6 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 /**
  * Gathers per-process throughput metrics using OS-level commands:
@@ -13,6 +13,20 @@ import type { ToolMetadata } from '../../../common/interfaces/index.js';
  * interval and computes the delta.
  */
 export class ApplicationThroughputTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Application Throughput',
+        unit: 'MB/s',
+        slices: [
+          { label: 'Net RX', field: 'summary.totalNetworkMbPerSec' },
+          { label: 'Disk I/O', field: 'summary.totalIoMbPerSec' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'application_throughput',

@@ -1,8 +1,25 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class NetworkErrorsTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Network Errors',
+        unit: 'count',
+        slices: [
+          { label: 'Retransmits', field: 'retransmits' },
+          { label: 'Attempt Fails', field: 'attemptFails' },
+          { label: 'Estab Resets', field: 'estabResets' },
+          { label: 'Listen Drops', field: 'listenDrops' },
+          { label: 'Listen Overflows', field: 'listenOverflows' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'network_errors',

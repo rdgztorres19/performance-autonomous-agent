@@ -1,8 +1,24 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class DiskSaturationTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Disk Saturation by Device',
+        unit: '%',
+        arrayField: 'devices',
+        labelField: 'device',
+        valueFields: [
+          { field: 'utilizationPercent', label: 'Utilization %' },
+          { field: 'queueDepth', label: 'Queue Depth' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'disk_saturation',

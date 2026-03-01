@@ -1,8 +1,21 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class ProcessCpuTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'horizontalBar',
+        title: 'Top Processes by CPU',
+        unit: '%',
+        arrayField: 'topProcesses',
+        labelField: 'command',
+        valueField: 'cpuPercent',
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'process_cpu',

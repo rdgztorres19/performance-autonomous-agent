@@ -14,4 +14,8 @@ export type {
   ToolParameter,
   ToolResult,
   PerformanceTool,
+  VisualizationSpec,
+  ChartDefinition,
+  ChartSlice,
+  ChartType,
 } from './tool.interface.js';

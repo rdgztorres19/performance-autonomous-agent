@@ -1,8 +1,19 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class ThreadingMetricsTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'donut',
+        title: 'Thread States',
+        unit: 'count',
+        dynamicMapField: 'states',
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'threading_metrics',

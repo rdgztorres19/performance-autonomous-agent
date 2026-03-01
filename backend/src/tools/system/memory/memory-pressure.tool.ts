@@ -1,8 +1,25 @@
 import { BaseTool } from '../../base-tool.js';
 import { ToolCategory, MetricLevel } from '../../../common/interfaces/index.js';
-import type { ToolMetadata } from '../../../common/interfaces/index.js';
+import type { ToolMetadata, VisualizationSpec } from '../../../common/interfaces/index.js';
 
 export class MemoryPressureTool extends BaseTool {
+  override getVisualization(): VisualizationSpec {
+    return {
+      charts: [{
+        type: 'bar',
+        title: 'Memory Pressure',
+        unit: 'count',
+        slices: [
+          { label: 'Minor Faults', field: 'pageFaultsMinor' },
+          { label: 'Major Faults', field: 'pageFaultsMajor' },
+          { label: 'Swap In', field: 'swapIn' },
+          { label: 'Swap Out', field: 'swapOut' },
+          { label: 'OOM Kills', field: 'oomKills' },
+        ],
+      }],
+    };
+  }
+
   getMetadata(): ToolMetadata {
     return {
       name: 'memory_pressure',
