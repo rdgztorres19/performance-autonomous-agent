@@ -12,6 +12,7 @@ import { Server, Socket } from 'socket.io';
 import { TimelineService } from '../agent/services/timeline.service.js';
 import { ReportService } from '../agent/services/report.service.js';
 import { FormGenerationService } from '../agent/services/form-generation.service.js';
+import { UserInteractionService } from '../agent/services/user-interaction.service.js';
 
 @WebSocketGateway({ cors: { origin: '*' } })
 export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, OnModuleInit {
@@ -24,6 +25,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     private readonly timelineService: TimelineService,
     private readonly reportService: ReportService,
     private readonly formGenerationService: FormGenerationService,
+    private readonly userInteractionService: UserInteractionService,
   ) {}
 
   onModuleInit(): void {
@@ -71,6 +73,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, 
     @MessageBody() data: { formId: string; response: Record<string, unknown> },
   ): Promise<{ success: boolean }> {
     await this.formGenerationService.submitResponse(data.formId, data.response);
+    this.userInteractionService.submitResponse(data.formId, data.response);
     return { success: true };
   }
 }

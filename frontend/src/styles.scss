@@ -1,1 +1,344 @@
-/* You can add global styles to this file, and also import other style files */
+@use 'bootstrap/scss/bootstrap';
+
+:root {
+  --pa-primary: #6366f1;
+  --pa-primary-light: #818cf8;
+  --pa-bg-dark: #0f172a;
+  --pa-bg-card: #1e293b;
+  --pa-bg-card-hover: #334155;
+  --pa-text: #f1f5f9;
+  --pa-text-secondary: #cbd5e1;
+  --pa-text-muted: #94a3b8;
+  --pa-border: #334155;
+  --pa-success: #34d399;
+  --pa-warning: #fbbf24;
+  --pa-danger: #f87171;
+  --pa-info: #60a5fa;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--pa-bg-dark) !important;
+  color: var(--pa-text) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+/* ====== Typography overrides ====== */
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  color: var(--pa-text) !important;
+}
+
+p, span, label, small, strong, em, li, td, th, div {
+  color: inherit;
+}
+
+a {
+  color: var(--pa-primary-light);
+}
+a:hover {
+  color: #a5b4fc;
+}
+
+.text-muted {
+  color: var(--pa-text-muted) !important;
+}
+
+/* ====== Cards ====== */
+.card {
+  background-color: var(--pa-bg-card) !important;
+  border: 1px solid var(--pa-border) !important;
+  border-radius: 0.75rem;
+  color: var(--pa-text) !important;
+}
+
+.card-header {
+  background-color: rgba(0, 0, 0, 0.2) !important;
+  border-bottom: 1px solid var(--pa-border) !important;
+  color: var(--pa-text) !important;
+}
+
+.card-body {
+  color: var(--pa-text) !important;
+}
+
+/* ====== Buttons ====== */
+.btn-primary {
+  background-color: var(--pa-primary) !important;
+  border-color: var(--pa-primary) !important;
+  color: #fff !important;
+}
+.btn-primary:hover {
+  background-color: var(--pa-primary-light) !important;
+  border-color: var(--pa-primary-light) !important;
+}
+
+.btn-outline-secondary {
+  color: var(--pa-text-secondary) !important;
+  border-color: var(--pa-border) !important;
+}
+.btn-outline-secondary:hover {
+  background-color: var(--pa-bg-card-hover) !important;
+  color: var(--pa-text) !important;
+}
+
+.btn-outline-danger {
+  color: var(--pa-danger) !important;
+  border-color: var(--pa-danger) !important;
+}
+.btn-outline-danger:hover {
+  background-color: var(--pa-danger) !important;
+  color: #fff !important;
+}
+
+.btn-success {
+  background-color: var(--pa-success) !important;
+  border-color: var(--pa-success) !important;
+  color: #0f172a !important;
+}
+
+/* ====== Forms ====== */
+.form-control,
+.form-select {
+  background-color: var(--pa-bg-dark) !important;
+  border-color: var(--pa-border) !important;
+  color: var(--pa-text) !important;
+}
+
+.form-control::placeholder {
+  color: var(--pa-text-muted) !important;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--pa-bg-dark) !important;
+  border-color: var(--pa-primary) !important;
+  color: var(--pa-text) !important;
+  box-shadow: 0 0 0 0.2rem rgba(99, 102, 241, 0.3) !important;
+}
+
+.form-label {
+  color: var(--pa-text-secondary) !important;
+  font-weight: 500;
+}
+
+.form-select option {
+  background-color: var(--pa-bg-dark);
+  color: var(--pa-text);
+}
+
+/* ====== List groups ====== */
+.list-group-item {
+  background-color: var(--pa-bg-card) !important;
+  color: var(--pa-text) !important;
+  border-color: var(--pa-border) !important;
+}
+
+.list-group-item:hover,
+.list-group-item-action:hover {
+  background-color: var(--pa-bg-card-hover) !important;
+  color: var(--pa-text) !important;
+}
+
+.list-group-item.active {
+  background-color: var(--pa-primary) !important;
+  border-color: var(--pa-primary) !important;
+  color: #fff !important;
+}
+
+/* ====== Badges ====== */
+.badge {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.bg-secondary {
+  background-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+.bg-success {
+  background-color: var(--pa-success) !important;
+  color: #0f172a !important;
+}
+
+.bg-danger {
+  background-color: var(--pa-danger) !important;
+  color: #fff !important;
+}
+
+.bg-warning {
+  background-color: var(--pa-warning) !important;
+  color: #0f172a !important;
+}
+
+.bg-info {
+  background-color: var(--pa-info) !important;
+  color: #0f172a !important;
+}
+
+.bg-primary {
+  background-color: var(--pa-primary) !important;
+  color: #fff !important;
+}
+
+.badge-severity-critical {
+  background-color: var(--pa-danger) !important;
+  color: #fff !important;
+}
+.badge-severity-warning {
+  background-color: var(--pa-warning) !important;
+  color: #0f172a !important;
+}
+.badge-severity-info {
+  background-color: var(--pa-info) !important;
+  color: #0f172a !important;
+}
+
+/* ====== Navbar ====== */
+.navbar, nav {
+  background-color: var(--pa-bg-card) !important;
+  border-bottom: 1px solid var(--pa-border);
+}
+
+.navbar-brand, .nav-link {
+  color: var(--pa-text) !important;
+}
+
+.nav-link:hover {
+  color: var(--pa-primary-light) !important;
+}
+
+.nav-link.active {
+  color: var(--pa-primary-light) !important;
+  font-weight: 600;
+}
+
+/* ====== Tables ====== */
+.table {
+  color: var(--pa-text) !important;
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--pa-text);
+}
+
+.table > thead {
+  color: var(--pa-text-secondary);
+  border-bottom-color: var(--pa-border);
+}
+
+.table > tbody > tr {
+  border-bottom-color: var(--pa-border);
+}
+
+/* ====== Timeline ====== */
+.timeline-entry {
+  border-left: 3px solid var(--pa-border);
+  padding: 0.5rem 0 0.5rem 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--pa-text) !important;
+
+  span {
+    color: var(--pa-text) !important;
+  }
+
+  &.type-error {
+    border-left-color: var(--pa-danger);
+  }
+  &.type-problem {
+    border-left-color: var(--pa-warning);
+  }
+  &.type-decision {
+    border-left-color: var(--pa-primary-light);
+  }
+  &.type-tool {
+    border-left-color: var(--pa-success);
+  }
+  &.type-user {
+    border-left-color: var(--pa-info);
+  }
+}
+
+/* ====== Connection indicator ====== */
+.connection-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  &.connected { background-color: var(--pa-success); }
+  &.disconnected { background-color: var(--pa-danger); }
+  &.connecting { background-color: var(--pa-warning); }
+}
+
+/* ====== Scrollbar ====== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--pa-bg-dark);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pa-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--pa-text-muted);
+}
+
+/* ====== Alerts ====== */
+.alert-secondary {
+  background-color: rgba(71, 85, 105, 0.3) !important;
+  border-color: var(--pa-border) !important;
+  color: var(--pa-text-secondary) !important;
+}
+
+.alert-success {
+  background-color: rgba(52, 211, 153, 0.15) !important;
+  border-color: rgba(52, 211, 153, 0.3) !important;
+  color: var(--pa-success) !important;
+}
+
+.alert-info {
+  background-color: rgba(96, 165, 250, 0.15) !important;
+  border-color: rgba(96, 165, 250, 0.3) !important;
+  color: var(--pa-info) !important;
+}
+
+/* ====== Pre / Code blocks ====== */
+pre {
+  color: var(--pa-text-secondary) !important;
+  background-color: var(--pa-bg-dark) !important;
+}
+
+/* ====== Details / Summary ====== */
+summary {
+  color: var(--pa-text-muted) !important;
+  cursor: pointer;
+}
+
+details[open] summary {
+  color: var(--pa-text-secondary) !important;
+}
+
+/* ====== Spinner ====== */
+.spinner-border {
+  color: var(--pa-text) !important;
+}
+
+/* ====== Misc ====== */
+hr {
+  border-color: var(--pa-border) !important;
+  opacity: 0.5;
+}
+
+code {
+  color: var(--pa-primary-light);
+}
+
+::selection {
+  background-color: rgba(99, 102, 241, 0.3);
+  color: #fff;
+}

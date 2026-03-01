@@ -48,12 +48,24 @@ export class ThreadingMetricsTool extends BaseTool {
     for (const line of threadLines) {
       const [, state] = line.split(/\s+/);
       switch (state) {
-        case 'R': stateCounts['running']++; break;
-        case 'S': stateCounts['sleeping']++; break;
-        case 'D': stateCounts['diskSleep']++; break;
-        case 'Z': stateCounts['zombie']++; break;
-        case 'T': stateCounts['stopped']++; break;
-        default: stateCounts['other']++; break;
+        case 'R':
+          stateCounts['running']++;
+          break;
+        case 'S':
+          stateCounts['sleeping']++;
+          break;
+        case 'D':
+          stateCounts['diskSleep']++;
+          break;
+        case 'Z':
+          stateCounts['zombie']++;
+          break;
+        case 'T':
+          stateCounts['stopped']++;
+          break;
+        default:
+          stateCounts['other']++;
+          break;
       }
     }
 

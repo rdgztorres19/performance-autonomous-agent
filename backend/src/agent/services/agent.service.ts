@@ -1,48 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatOpenAI } from '@langchain/openai';
 import { createAgent } from 'langchain';
-import { DynamicStructuredTool } from '@langchain/core/tools';
-import { z } from 'zod';
 
 import { Session, SessionStatus, Configuration } from '../../database/entities/index.js';
-import { ProblemCategory, ProblemSeverity } from '../../database/entities/index.js';
 import { ToolRegistry } from '../../tools/tool-registry.js';
+import { AgentToolRegistry } from '../../tools/agent/agent-tool-registry.js';
+import type { AgentContext } from '../../tools/agent/base-agent-tool.js';
+import { PERFORMANCE_TOOL_CLASSES_TOKEN } from '../../tools/tools.module.js';
 import { ConnectionFactory } from '../../connections/connection.factory.js';
 import { TimelineService } from './timeline.service.js';
 import { ReportService } from './report.service.js';
 import { FormGenerationService } from './form-generation.service.js';
+import { UserInteractionService } from './user-interaction.service.js';
 import { wrapAllToolsForLangChain } from './langchain-tool.wrapper.js';
 import { SYSTEM_PROMPT } from '../prompts/system-prompt.js';
 import type { Connection } from '../../common/interfaces/index.js';
-import { BaseTool } from '../../tools/base-tool.js';
-
-import {
-  CpuUtilizationTool,
-  LoadAverageTool,
-  CpuSaturationTool,
-  CpuSchedulingTool,
-} from '../../tools/system/cpu/index.js';
-import { MemoryUtilizationTool, MemoryPressureTool } from '../../tools/system/memory/index.js';
-import {
-  DiskThroughputTool,
-  DiskSaturationTool,
-  FileSystemTool,
-} from '../../tools/system/disk/index.js';
-import {
-  NetworkThroughputTool,
-  NetworkErrorsTool,
-  NetworkConnectionsTool,
-} from '../../tools/system/network/index.js';
-import { KernelMetricsTool } from '../../tools/system/kernel/index.js';
-import { VirtualizationMetricsTool } from '../../tools/system/virtualization/index.js';
-import {
-  ProcessCpuTool,
-  ProcessMemoryTool,
-  ProcessIoTool,
-} from '../../tools/application/process/index.js';
-import { ThreadingMetricsTool } from '../../tools/application/threading/index.js';
+import type { BaseTool } from '../../tools/base-tool.js';
 
 @Injectable()
 export class AgentService {
@@ -54,10 +29,14 @@ export class AgentService {
     @InjectRepository(Configuration)
     private readonly configRepo: Repository<Configuration>,
     private readonly toolRegistry: ToolRegistry,
+    private readonly agentToolRegistry: AgentToolRegistry,
+    @Inject(PERFORMANCE_TOOL_CLASSES_TOKEN)
+    private readonly performanceToolClasses: (new (conn: Connection) => BaseTool)[],
     private readonly connectionFactory: ConnectionFactory,
     private readonly timelineService: TimelineService,
     private readonly reportService: ReportService,
     private readonly formGenerationService: FormGenerationService,
+    private readonly userInteractionService: UserInteractionService,
   ) {}
 
   async startSession(configurationId: string): Promise<Session> {
@@ -73,8 +52,10 @@ export class AgentService {
       connectionType: config.connectionType,
     });
 
-    this.runAgent(saved.id, config).catch((err) => {
-      this.logger.error(`Agent session ${saved.id} failed: ${err.message}`, err.stack);
+    this.runAgent(saved.id, config).catch((err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      const stack = err instanceof Error ? err.stack : undefined;
+      this.logger.error(`Agent session ${saved.id} failed: ${message}`, stack);
     });
 
     return saved;
@@ -98,37 +79,60 @@ export class AgentService {
       await connection.connect();
       await this.timelineService.logInfo(sessionId, `Connected via ${config.connectionType}`);
 
-      this.registerTools(connection);
+      this.registerPerformanceTools(connection);
+
+      if (!config.openaiApiKey) {
+        throw new Error(
+          'OpenAI API key is not configured. Update the configuration with a valid API key.',
+        );
+      }
 
       const llm = new ChatOpenAI({
-        openAIApiKey: config.openaiApiKey ?? '',
-        modelName: config.openaiModel ?? 'gpt-4o',
+        apiKey: config.openaiApiKey,
+        model: config.openaiModel ?? 'gpt-4o',
         temperature: 0,
       });
 
-      const langchainTools = wrapAllToolsForLangChain(this.toolRegistry.getAll());
-      const agentTools = [...langchainTools, ...this.createAgentMetaTools(sessionId, llm)];
+      const agentContext: AgentContext = {
+        sessionId,
+        llm,
+        timelineService: this.timelineService,
+        reportService: this.reportService,
+        formGenerationService: this.formGenerationService,
+        userInteractionService: this.userInteractionService,
+      };
+
+      const toolWrapperCtx = { sessionId, timelineService: this.timelineService };
+      const performanceLcTools = wrapAllToolsForLangChain(
+        this.toolRegistry.getAll(),
+        toolWrapperCtx,
+      );
+      const agentLcTools = this.agentToolRegistry.toLangChainTools(agentContext);
+      const allTools = [...performanceLcTools, ...agentLcTools];
 
       const agent = createAgent({
         model: llm,
-        tools: agentTools,
+        tools: allTools,
+        systemPrompt: SYSTEM_PROMPT,
       });
 
       await this.timelineService.logInfo(
         sessionId,
-        `Agent initialized with ${agentTools.length} tools`,
+        `Agent initialized with ${allTools.length} tools`,
       );
 
-      const result = await agent.invoke({
-        messages: [
-          { role: 'system', content: SYSTEM_PROMPT },
-          {
-            role: 'user',
-            content:
-              'Start a comprehensive performance scan of this Linux system. Begin with high-level system metrics, then drill down into any areas showing potential issues. Report any problems you find.',
-          },
-        ],
-      });
+      await agent.invoke(
+        {
+          messages: [
+            {
+              role: 'user',
+              content:
+                'Hello! I need your help diagnosing performance issues on this Linux system. Please start by asking me what problems I am experiencing, then proceed with your investigation.',
+            },
+          ],
+        },
+        { recursionLimit: 150 },
+      );
 
       await this.timelineService.logInfo(sessionId, 'Agent scan completed');
 
@@ -148,118 +152,10 @@ export class AgentService {
     }
   }
 
-  private registerTools(connection: Connection): void {
-    const toolClasses: (new (conn: Connection) => BaseTool)[] = [
-      CpuUtilizationTool,
-      LoadAverageTool,
-      CpuSaturationTool,
-      CpuSchedulingTool,
-      MemoryUtilizationTool,
-      MemoryPressureTool,
-      DiskThroughputTool,
-      DiskSaturationTool,
-      FileSystemTool,
-      NetworkThroughputTool,
-      NetworkErrorsTool,
-      NetworkConnectionsTool,
-      KernelMetricsTool,
-      VirtualizationMetricsTool,
-      ProcessCpuTool,
-      ProcessMemoryTool,
-      ProcessIoTool,
-      ThreadingMetricsTool,
-    ];
-
-    for (const ToolClass of toolClasses) {
+  private registerPerformanceTools(connection: Connection): void {
+    for (const ToolClass of this.performanceToolClasses) {
       this.toolRegistry.register(new ToolClass(connection));
     }
-  }
-
-  private createAgentMetaTools(
-    sessionId: string,
-    llm: ChatOpenAI,
-  ): DynamicStructuredTool[] {
-    const reportTool = new DynamicStructuredTool({
-      name: 'report_problem',
-      description:
-        'Report a detected performance problem. Use this when you identify a performance issue based on collected metrics.',
-      schema: z.object({
-        category: z
-          .enum(['cpu', 'memory', 'disk', 'network', 'kernel', 'virtualization', 'application', 'file_system', 'other'])
-          .describe('Problem category'),
-        severity: z.enum(['critical', 'warning', 'info']).describe('Problem severity'),
-        title: z.string().describe('Brief problem title'),
-        description: z.string().describe('Problem description'),
-        explanation: z.string().describe('Why this is a problem'),
-        metrics: z.string().describe('JSON string of relevant metrics'),
-        recommendations: z.string().describe('Comma-separated list of recommendations'),
-      }),
-      func: async (input) => {
-        let metricsObj: Record<string, unknown> = {};
-        try {
-          metricsObj = JSON.parse(input.metrics);
-        } catch {
-          metricsObj = { raw: input.metrics };
-        }
-
-        const report = await this.reportService.createReport({
-          sessionId,
-          category: input.category as ProblemCategory,
-          severity: input.severity as ProblemSeverity,
-          title: input.title,
-          description: input.description,
-          explanation: input.explanation,
-          metrics: metricsObj,
-          recommendations: input.recommendations.split(',').map((r) => r.trim()),
-        });
-
-        await this.timelineService.logProblemDetected(sessionId, `[${input.severity.toUpperCase()}] ${input.title}`, {
-          reportId: report.id,
-          category: input.category,
-          severity: input.severity,
-        });
-
-        return JSON.stringify({ success: true, reportId: report.id });
-      },
-    });
-
-    const timelineTool = new DynamicStructuredTool({
-      name: 'log_reasoning',
-      description:
-        'Log your current reasoning and decision to the timeline. Use this to explain what you are checking and why.',
-      schema: z.object({
-        description: z.string().describe('What you are about to do and why'),
-        reasoning: z.string().describe('Your reasoning for this decision'),
-      }),
-      func: async (input) => {
-        await this.timelineService.logAgentDecision(sessionId, input.description, input.reasoning);
-        return JSON.stringify({ success: true });
-      },
-    });
-
-    const requestInfoTool = new DynamicStructuredTool({
-      name: 'request_user_info',
-      description:
-        'Request additional information from the user by generating a form. Use when you need specific context to continue debugging.',
-      schema: z.object({
-        context: z
-          .string()
-          .describe('Describe what information you need and why, so a form can be generated'),
-      }),
-      func: async (input) => {
-        const form = await this.formGenerationService.generateForm(llm, sessionId, input.context);
-        await this.timelineService.logUserInteraction(sessionId, `Requesting user input: ${input.context}`, {
-          formId: form.id,
-        });
-        return JSON.stringify({
-          success: true,
-          formId: form.id,
-          message: 'Form sent to user. Waiting for response.',
-        });
-      },
-    });
-
-    return [reportTool, timelineTool, requestInfoTool];
   }
 
   async getSession(sessionId: string): Promise<Session> {
@@ -270,6 +166,7 @@ export class AgentService {
   }
 
   async stopSession(sessionId: string): Promise<void> {
+    this.userInteractionService.cancelSession(sessionId);
     await this.sessionRepo.update(sessionId, {
       status: SessionStatus.COMPLETED,
       completedAt: new Date(),

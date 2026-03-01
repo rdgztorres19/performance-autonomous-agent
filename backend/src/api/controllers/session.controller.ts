@@ -1,4 +1,7 @@
 import { Controller, Get, Post, Param, Body } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Session } from '../../database/entities/index.js';
 import { AgentService } from '../../agent/services/agent.service.js';
 import { TimelineService } from '../../agent/services/timeline.service.js';
 import { ReportService } from '../../agent/services/report.service.js';
@@ -7,11 +10,18 @@ import { FormGenerationService } from '../../agent/services/form-generation.serv
 @Controller('api/sessions')
 export class SessionController {
   constructor(
+    @InjectRepository(Session)
+    private readonly sessionRepo: Repository<Session>,
     private readonly agentService: AgentService,
     private readonly timelineService: TimelineService,
     private readonly reportService: ReportService,
     private readonly formGenerationService: FormGenerationService,
   ) {}
+
+  @Get()
+  async findAll() {
+    return this.sessionRepo.find({ order: { startedAt: 'DESC' }, take: 50 });
+  }
 
   @Post()
   async create(@Body() body: { configurationId: string }) {

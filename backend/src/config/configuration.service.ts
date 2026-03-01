@@ -43,8 +43,22 @@ export class ConfigurationService {
 
   async update(id: string, dto: UpdateConfigDto): Promise<Configuration> {
     const existing = await this.configRepo.findOneByOrFail({ id });
-    Object.assign(existing, dto);
+    const sanitized = this.stripMaskedValues(dto);
+    Object.assign(existing, sanitized);
     return this.configRepo.save(existing);
+  }
+
+  private readonly MASKED_VALUE = '***configured***';
+
+  private stripMaskedValues(dto: UpdateConfigDto): UpdateConfigDto {
+    const result = { ...dto };
+    const sensitiveFields = ['openaiApiKey', 'sshPassword', 'sshPrivateKey'] as const;
+    for (const field of sensitiveFields) {
+      if (result[field] === this.MASKED_VALUE || result[field] === '') {
+        delete result[field];
+      }
+    }
+    return result;
   }
 
   async findById(id: string): Promise<Configuration> {

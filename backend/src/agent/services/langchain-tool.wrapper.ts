@@ -1,6 +1,16 @@
 import { DynamicStructuredTool } from '@langchain/core/tools';
 import { z } from 'zod';
-import type { PerformanceTool, ToolMetadata, ToolParameter } from '../../common/interfaces/index.js';
+import type {
+  PerformanceTool,
+  ToolMetadata,
+  ToolParameter,
+} from '../../common/interfaces/index.js';
+import type { TimelineService } from './timeline.service.js';
+
+export interface ToolWrapperContext {
+  sessionId: string;
+  timelineService: TimelineService;
+}
 
 function buildZodSchema(parameters?: ToolParameter[]): z.ZodObject<Record<string, z.ZodTypeAny>> {
   if (!parameters || parameters.length === 0) {
@@ -31,7 +41,10 @@ function buildZodSchema(parameters?: ToolParameter[]): z.ZodObject<Record<string
   return z.object(shape);
 }
 
-export function wrapToolForLangChain(tool: PerformanceTool): DynamicStructuredTool {
+export function wrapToolForLangChain(
+  tool: PerformanceTool,
+  ctx?: ToolWrapperContext,
+): DynamicStructuredTool {
   const metadata: ToolMetadata = tool.getMetadata();
   const schema = buildZodSchema(metadata.parameters);
 
@@ -40,12 +53,23 @@ export function wrapToolForLangChain(tool: PerformanceTool): DynamicStructuredTo
     description: metadata.description,
     schema,
     func: async (input: Record<string, unknown>) => {
+      if (ctx) {
+        await ctx.timelineService.logToolExecution(
+          ctx.sessionId,
+          metadata.name,
+          metadata.description,
+          { input },
+        );
+      }
       const result = await tool.execute(input);
       return JSON.stringify(result);
     },
   });
 }
 
-export function wrapAllToolsForLangChain(tools: PerformanceTool[]): DynamicStructuredTool[] {
-  return tools.map(wrapToolForLangChain);
+export function wrapAllToolsForLangChain(
+  tools: PerformanceTool[],
+  ctx?: ToolWrapperContext,
+): DynamicStructuredTool[] {
+  return tools.map((t) => wrapToolForLangChain(t, ctx));
 }

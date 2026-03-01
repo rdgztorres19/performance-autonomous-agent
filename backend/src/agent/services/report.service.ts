@@ -1,11 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  ProblemReport,
-  ProblemCategory,
-  ProblemSeverity,
-} from '../../database/entities/index.js';
+import { ProblemReport, ProblemCategory, ProblemSeverity } from '../../database/entities/index.js';
 import { Subject, Observable } from 'rxjs';
 
 export interface ReportEvent {

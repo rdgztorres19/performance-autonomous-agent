@@ -7,8 +7,8 @@
     "backend:dev": "cd backend && npm run start:dev",
     "backend:build": "cd backend && npm run build",
     "backend:start": "cd backend && npm run start:prod",
-    "frontend:dev": "cd frontend && npx ng serve",
-    "frontend:build": "cd frontend && npx ng build",
+    "frontend:dev": "cd frontend-react && npm run dev -- --port 4200",
+    "frontend:build": "cd frontend-react && npm run build",
     "dev": "concurrently \"npm run backend:dev\" \"npm run frontend:dev\"",
     "build": "npm run backend:build && npm run frontend:build"
   },
