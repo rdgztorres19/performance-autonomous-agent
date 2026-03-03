@@ -7,6 +7,7 @@ import { AgentModule } from './agent/agent.module.js';
 import { ConfigModule } from './config/config.module.js';
 import { ApiModule } from './api/api.module.js';
 import { WebsocketModule } from './websocket/websocket.module.js';
+import { TerminalModule } from './terminal/terminal.module.js';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { WebsocketModule } from './websocket/websocket.module.js';
     ConfigModule,
     ApiModule,
     WebsocketModule,
+    TerminalModule,
   ],
 })
 export class AppModule {}

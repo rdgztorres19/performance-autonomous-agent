@@ -54,6 +54,24 @@ export class SshConnection implements Connection {
     return this.connected;
   }
 
+  async openShell(ptyOpts: { rows: number; cols: number }): Promise<ClientChannel> {
+    if (!this.connected) {
+      await this.connect();
+    }
+    return new Promise<ClientChannel>((resolve, reject) => {
+      this.client.shell(
+        { term: 'xterm', cols: ptyOpts.cols, rows: ptyOpts.rows },
+        (err: Error | undefined, stream: ClientChannel) => {
+          if (err) {
+            reject(new ConnectionError(`SSH shell failed: ${err.message}`, err));
+            return;
+          }
+          resolve(stream);
+        },
+      );
+    });
+  }
+
   async execute(command: string, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<CommandResult> {
     if (!this.connected) {
       await this.connect();

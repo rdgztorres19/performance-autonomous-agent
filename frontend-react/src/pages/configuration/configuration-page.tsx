@@ -11,10 +11,11 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, Wifi, WifiOff, Loader2, Terminal } from 'lucide-react';
 import { useConfigurations, useDeleteConfiguration } from '@/api/configurations';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { ConfigForm } from './components/config-form';
+import { TerminalModal } from './components/terminal-modal';
 import { toast } from 'sonner';
 import type { Configuration } from '@/types';
 
@@ -29,6 +30,7 @@ export function ConfigurationPage() {
   }, [ws.connect]);
   const [isNew, setIsNew] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Configuration | null>(null);
+  const [terminalConfig, setTerminalConfig] = useState<Configuration | null>(null);
 
   const handleNew = () => {
     setSelected(null);
@@ -189,6 +191,15 @@ export function ConfigurationPage() {
                           </td>
                           <td className="px-5 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setTerminalConfig(config)}
+                                title="Open Terminal"
+                              >
+                                <Terminal className="h-3.5 w-3.5" />
+                              </Button>
                               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(config)}>
                                 <Pencil className="h-3.5 w-3.5" />
                               </Button>
@@ -207,6 +218,11 @@ export function ConfigurationPage() {
             </CardContent>
           </Card>
         )}
+      <TerminalModal
+        config={terminalConfig}
+        open={!!terminalConfig}
+        onClose={() => setTerminalConfig(null)}
+      />
       <Dialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
