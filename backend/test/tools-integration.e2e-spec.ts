@@ -27,9 +27,12 @@ import { CpuUtilizationTool } from '../src/tools/system/cpu/cpu-utilization.tool
 import { LoadAverageTool } from '../src/tools/system/cpu/load-average.tool';
 import { CpuSaturationTool } from '../src/tools/system/cpu/cpu-saturation.tool';
 import { CpuSchedulingTool } from '../src/tools/system/cpu/cpu-scheduling.tool';
+import { CpuPerCoreTool } from '../src/tools/system/cpu/cpu-per-core.tool';
+import { CpuInterruptsTool } from '../src/tools/system/cpu/cpu-interrupts.tool';
 
 import { MemoryUtilizationTool } from '../src/tools/system/memory/memory-utilization.tool';
 import { MemoryPressureTool } from '../src/tools/system/memory/memory-pressure.tool';
+import { OomKillsTool } from '../src/tools/system/memory/oom-kills.tool';
 
 import { FileSystemTool } from '../src/tools/system/disk/filesystem.tool';
 import { DiskThroughputTool } from '../src/tools/system/disk/disk-throughput.tool';
@@ -38,13 +41,19 @@ import { DiskSaturationTool } from '../src/tools/system/disk/disk-saturation.too
 import { NetworkConnectionsTool } from '../src/tools/system/network/network-connections.tool';
 import { NetworkErrorsTool } from '../src/tools/system/network/network-errors.tool';
 import { NetworkThroughputTool } from '../src/tools/system/network/network-throughput.tool';
+import { NetworkInterfaceErrorsTool } from '../src/tools/system/network/network-interface-errors.tool';
 
 import { KernelMetricsTool } from '../src/tools/system/kernel/kernel-metrics.tool';
+import { SystemLimitsTool } from '../src/tools/system/kernel/system-limits.tool';
 import { VirtualizationMetricsTool } from '../src/tools/system/virtualization/virtualization-metrics.tool';
 
 import { ProcessCpuTool } from '../src/tools/application/process/process-cpu.tool';
 import { ProcessMemoryTool } from '../src/tools/application/process/process-memory.tool';
 import { ProcessIoTool } from '../src/tools/application/process/process-io.tool';
+import { ProcessThreadCpuTool } from '../src/tools/application/process/process-thread-cpu.tool';
+import { ProcessCpuAffinityTool } from '../src/tools/application/process/process-cpu-affinity.tool';
+import { ProcessThreadMemoryTool } from '../src/tools/application/process/process-thread-memory.tool';
+import { ProcessOpenFilesTool } from '../src/tools/application/process/process-open-files.tool';
 
 import { ThreadingMetricsTool } from '../src/tools/application/threading/threading-metrics.tool';
 import { RuntimeSpecificTool } from '../src/tools/application/runtime/runtime-specific.tool';
@@ -161,6 +170,27 @@ describe('System Tools (via SSH)', () => {
       );
       expect(typeof result.data['schedstatAvailable']).toBe('boolean');
     });
+
+    it('cpu_per_core: should collect CPU % per core', async () => {
+      const result = await runToolAndAssert(
+        CpuPerCoreTool,
+        { sampleIntervalMs: 500 },
+        {
+          requiredFields: ['cores', 'coreCount'],
+        },
+      );
+      expect(Array.isArray(result.data['cores'])).toBe(true);
+    }, 15000);
+
+    it('cpu_interrupts: should collect interrupts and softirqs', async () => {
+      await runToolAndAssert(
+        CpuInterruptsTool,
+        {},
+        {
+          requiredFields: ['perCpu', 'softirqByType'],
+        },
+      );
+    });
   });
 
   describe('Memory', () => {
@@ -180,6 +210,16 @@ describe('System Tools (via SSH)', () => {
         {},
         {
           requiredFields: ['pageFaultsMinor', 'swapIn', 'swapOut'],
+        },
+      );
+    });
+
+    it('oom_kills: should collect OOM events from vmstat and dmesg', async () => {
+      await runToolAndAssert(
+        OomKillsTool,
+        {},
+        {
+          requiredFields: ['oomKillsFromVmstat', 'oomEventsCount'],
         },
       );
     });
@@ -256,6 +296,16 @@ describe('System Tools (via SSH)', () => {
       );
       expect(Array.isArray(result.data['interfaces'])).toBe(true);
     }, 15000);
+
+    it('network_interface_errors: should collect errors/drops per interface', async () => {
+      await runToolAndAssert(
+        NetworkInterfaceErrorsTool,
+        {},
+        {
+          requiredFields: ['interfaces', 'totals'],
+        },
+      );
+    });
   });
 
   describe('Kernel', () => {
@@ -269,7 +319,18 @@ describe('System Tools (via SSH)', () => {
             'openFileDescriptors',
             'maxFileDescriptors',
             'uptimeSeconds',
+            'somaxconn',
           ],
+        },
+      );
+    });
+
+    it('system_limits: should collect kernel and process limits', async () => {
+      await runToolAndAssert(
+        SystemLimitsTool,
+        {},
+        {
+          requiredFields: ['kernel', 'systemFds'],
         },
       );
     });
@@ -335,6 +396,38 @@ describe('Application Tools (via SSH, PID 1)', () => {
           requiredFields: ['name', 'vmRssKb'],
         },
       );
+    });
+
+    it('process_thread_cpu: should collect CPU per thread', async () => {
+      await runToolAndAssert(ProcessThreadCpuTool, { pid: pid1, sampleIntervalMs: 300 }, {
+        requiredFields: ['threads', 'totalThreads'],
+      });
+    }, 10000);
+
+    it('process_cpu_affinity: should return affinity mask', async () => {
+      const result = await runToolAndAssert(ProcessCpuAffinityTool, { pid: pid1 }, {
+        allowError: true,
+      });
+      if (result.success && !result.data['error']) {
+        expect(result.data).toHaveProperty('affinityMask');
+        expect(result.data).toHaveProperty('cpus');
+      }
+    });
+
+    it('process_thread_memory: should collect memory per thread', async () => {
+      await runToolAndAssert(ProcessThreadMemoryTool, { pid: pid1 }, {
+        requiredFields: ['threads', 'totalVmRssKb'],
+      });
+    });
+
+    it('process_open_files: should list open FDs', async () => {
+      const result = await runToolAndAssert(ProcessOpenFilesTool, { pid: pid1 }, {
+        allowError: true,
+      });
+      if (result.success && !result.data['error']) {
+        expect(result.data).toHaveProperty('openFiles');
+        expect(result.data).toHaveProperty('totalCount');
+      }
     });
 
     it('process_io: should read I/O stats for PID (or report permission error)', async () => {

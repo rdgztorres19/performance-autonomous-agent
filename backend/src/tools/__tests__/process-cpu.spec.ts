@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { ProcessCpuTool } from '../application/process/process-cpu.tool';
 import { ToolCategory, MetricLevel } from '../../common/interfaces';
 import { createMockConnection } from './mock-connection';
@@ -68,7 +70,7 @@ describe('ProcessCpuTool', () => {
       const stdout = [
         ' 1234  1000  15.5   3.0 500000 60000 Sl   100:00 nginx',
         '---SEP---',
-        '1234 (nginx) S 1000 ...',
+        '1234 (nginx) S 1000 1 1 0 0 0 100 0 5 0 500 200 0 0 0 0',
         '---SEP---',
         'Name: nginx\nThreads: 4',
       ].join('\n');
@@ -80,6 +82,12 @@ describe('ProcessCpuTool', () => {
       expect(result.ppid).toBe(1000);
       expect(result.cpuPercent).toBe(15.5);
       expect(result.command).toBe('nginx');
+      expect(result.utimeTicks).toBe(500);
+      expect(result.stimeTicks).toBe(200);
+      expect(result.minflt).toBe(100);
+      expect(result.majflt).toBe(5);
+      expect(result.userPercent).toBe(71.43);
+      expect(result.systemPercent).toBe(28.57);
     });
   });
 });

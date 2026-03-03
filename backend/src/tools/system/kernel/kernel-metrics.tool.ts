@@ -19,7 +19,7 @@ export class KernelMetricsTool extends BaseTool {
     return {
       name: 'kernel_metrics',
       description:
-        'Collects kernel-level metrics: uptime, kernel version, file descriptor usage, process limits, and dmesg error summary.',
+        'Collects kernel-level metrics: uptime, kernel version, file descriptor usage, somaxconn (listen queue limit), process limits, and dmesg error summary.',
       category: ToolCategory.KERNEL,
       level: MetricLevel.SYSTEM,
       platform: ['linux'],
@@ -35,6 +35,8 @@ export class KernelMetricsTool extends BaseTool {
       'cat /proc/uptime',
       'echo "---SEP---"',
       'cat /proc/sys/kernel/threads-max 2>/dev/null || echo "0"',
+      'echo "---SEP---"',
+      'cat /proc/sys/net/core/somaxconn 2>/dev/null || echo "128"',
       'echo "---SEP---"',
       'dmesg -T --level=err,warn 2>/dev/null | tail -20 || echo "dmesg_unavailable"',
     ].join(' && ');
@@ -55,8 +57,9 @@ export class KernelMetricsTool extends BaseTool {
     const idleSeconds = parseFloat(uptimeParts[1] ?? '0');
 
     const threadsMax = parseInt(parts[3] ?? '0', 10);
+    const somaxconn = parseInt(parts[4] ?? '128', 10);
 
-    const dmesgRaw = parts[4] ?? '';
+    const dmesgRaw = parts[5] ?? '';
     const hasDmesgErrors = !dmesgRaw.includes('dmesg_unavailable') && dmesgRaw.length > 0;
 
     return {
@@ -71,6 +74,7 @@ export class KernelMetricsTool extends BaseTool {
         ? Math.round((openFileDescriptors / maxFileDescriptors) * 10000) / 100
         : 0,
       threadsMax,
+      somaxconn,
       hasDmesgErrors,
       recentDmesgErrors: hasDmesgErrors ? dmesgRaw.split('\n').slice(-10) : [],
     };

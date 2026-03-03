@@ -32,6 +32,8 @@ describe('KernelMetricsTool', () => {
         '---SEP---',
         '65536',
         '---SEP---',
+        '128',
+        '---SEP---',
         '[Wed Jan  1 10:00:00 2025] some error message',
       ].join('\n');
 
@@ -46,6 +48,7 @@ describe('KernelMetricsTool', () => {
       expect(result.uptimeSeconds).toBe(86401);
       expect(result.uptimeHours).toBe(24);
       expect(result.threadsMax).toBe(65536);
+      expect(result.somaxconn).toBe(128);
       expect(result.hasDmesgErrors).toBe(true);
       expect(result.recentDmesgErrors).toHaveLength(1);
     });
@@ -59,6 +62,8 @@ describe('KernelMetricsTool', () => {
         '3600.0 1000.0',
         '---SEP---',
         '32768',
+        '---SEP---',
+        '128',
         '---SEP---',
         'dmesg_unavailable',
       ].join('\n');

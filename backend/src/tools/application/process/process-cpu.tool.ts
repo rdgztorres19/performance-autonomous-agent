@@ -56,9 +56,10 @@ export class ProcessCpuTool extends BaseTool {
     if (stdout.includes('---SEP---')) {
       const parts = stdout.split('---SEP---').map((s) => s.trim());
       const psLine = parts[0] ?? '';
+      const statLine = parts[1] ?? '';
       const cols = psLine.trim().split(/\s+/);
 
-      return {
+      const result: Record<string, unknown> = {
         pid: parseInt(cols[0] ?? '0', 10),
         ppid: parseInt(cols[1] ?? '0', 10),
         cpuPercent: parseFloat(cols[2] ?? '0'),
@@ -69,6 +70,20 @@ export class ProcessCpuTool extends BaseTool {
         cpuTime: cols[7] ?? '0:00',
         command: cols.slice(8).join(' '),
       };
+
+      const stat = this.parseProcStat(statLine);
+      if (stat) {
+        result.utimeTicks = stat.utime;
+        result.stimeTicks = stat.stime;
+        result.minflt = stat.minflt;
+        result.majflt = stat.majflt;
+        const total = stat.utime + stat.stime;
+        if (total > 0) {
+          result.userPercent = Math.round((stat.utime / total) * 10000) / 100;
+          result.systemPercent = Math.round((stat.stime / total) * 10000) / 100;
+        }
+      }
+      return result;
     }
 
     const lines = stdout.trim().split('\n');
@@ -90,5 +105,19 @@ export class ProcessCpuTool extends BaseTool {
     }
 
     return { topProcesses: processes };
+  }
+
+  private parseProcStat(statLine: string): { utime: number; stime: number; minflt: number; majflt: number } | null {
+    if (!statLine || statLine.length < 10) return null;
+    const rparen = statLine.indexOf(')');
+    if (rparen < 0) return null;
+    const after = statLine.slice(rparen + 1).trim().split(/\s+/);
+    if (after.length < 13) return null;
+    return {
+      minflt: parseInt(after[7] ?? '0', 10),
+      majflt: parseInt(after[9] ?? '0', 10),
+      utime: parseInt(after[11] ?? '0', 10),
+      stime: parseInt(after[12] ?? '0', 10),
+    };
   }
 }

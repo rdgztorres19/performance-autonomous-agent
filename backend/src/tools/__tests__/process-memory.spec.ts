@@ -56,6 +56,8 @@ describe('ProcessMemoryTool', () => {
         'VmStk:\t8192 kB',
         'Threads:\t32',
         '---SEP---',
+        '1 (mysqld) S 0 1 1 0 0 0 5000 0 100 0',
+        '---SEP---',
         'smaps_unavailable',
       ].join('\n');
 
@@ -68,6 +70,8 @@ describe('ProcessMemoryTool', () => {
       expect(result.threads).toBe(32);
       expect(result.vmRssMb).toBe(293);
       expect(result.vmSizeMb).toBe(1953);
+      expect(result.minflt).toBe(5000);
+      expect(result.majflt).toBe(100);
     });
   });
 });

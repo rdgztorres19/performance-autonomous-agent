@@ -50,6 +50,8 @@ export class ProcessMemoryTool extends BaseTool {
       return [
         `cat /proc/${pid}/status 2>/dev/null | grep -E "^(VmSize|VmRSS|VmSwap|VmPeak|VmData|VmStk|Threads|Name)"`,
         'echo "---SEP---"',
+        `cat /proc/${pid}/stat 2>/dev/null || echo "stat_unavailable"`,
+        'echo "---SEP---"',
         `cat /proc/${pid}/smaps_rollup 2>/dev/null || echo "smaps_unavailable"`,
       ].join(' && ');
     }
@@ -68,7 +70,7 @@ export class ProcessMemoryTool extends BaseTool {
 
       const parseKb = (val: string | undefined) => parseInt((val ?? '0').replace(/\s*kB/, ''), 10);
 
-      return {
+      const result: Record<string, unknown> = {
         name: statusValues['Name'] ?? 'unknown',
         vmSizeKb: parseKb(statusValues['VmSize']),
         vmRssKb: parseKb(statusValues['VmRSS']),
@@ -80,6 +82,13 @@ export class ProcessMemoryTool extends BaseTool {
         vmSizeMb: Math.round(parseKb(statusValues['VmSize']) / 1024),
         vmRssMb: Math.round(parseKb(statusValues['VmRSS']) / 1024),
       };
+
+      const stat = this.parseProcStat(parts[1] ?? '');
+      if (stat) {
+        result.minflt = stat.minflt;
+        result.majflt = stat.majflt;
+      }
+      return result;
     }
 
     const lines = stdout.trim().split('\n');
@@ -100,5 +109,17 @@ export class ProcessMemoryTool extends BaseTool {
     }
 
     return { topProcesses: processes };
+  }
+
+  private parseProcStat(statLine: string): { minflt: number; majflt: number } | null {
+    if (!statLine || statLine.includes('stat_unavailable')) return null;
+    const rparen = statLine.indexOf(')');
+    if (rparen < 0) return null;
+    const after = statLine.slice(rparen + 1).trim().split(/\s+/);
+    if (after.length < 10) return null;
+    return {
+      minflt: parseInt(after[7] ?? '0', 10),
+      majflt: parseInt(after[9] ?? '0', 10),
+    };
   }
 }

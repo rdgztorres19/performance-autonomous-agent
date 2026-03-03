@@ -13,17 +13,28 @@ import {
   LoadAverageTool,
   CpuSaturationTool,
   CpuSchedulingTool,
+  CpuPerCoreTool,
+  CpuInterruptsTool,
 } from './system/cpu/index.js';
-import { MemoryUtilizationTool, MemoryPressureTool } from './system/memory/index.js';
+import { MemoryUtilizationTool, MemoryPressureTool, OomKillsTool } from './system/memory/index.js';
 import { DiskThroughputTool, DiskSaturationTool, FileSystemTool } from './system/disk/index.js';
 import {
   NetworkThroughputTool,
   NetworkErrorsTool,
   NetworkConnectionsTool,
+  NetworkInterfaceErrorsTool,
 } from './system/network/index.js';
-import { KernelMetricsTool } from './system/kernel/index.js';
+import { KernelMetricsTool, SystemLimitsTool } from './system/kernel/index.js';
 import { VirtualizationMetricsTool } from './system/virtualization/index.js';
-import { ProcessCpuTool, ProcessMemoryTool, ProcessIoTool } from './application/process/index.js';
+import {
+  ProcessCpuTool,
+  ProcessMemoryTool,
+  ProcessIoTool,
+  ProcessThreadCpuTool,
+  ProcessCpuAffinityTool,
+  ProcessThreadMemoryTool,
+  ProcessOpenFilesTool,
+} from './application/process/index.js';
 import { ThreadingMetricsTool } from './application/threading/index.js';
 import { ApplicationLatencyTool } from './application/latency/index.js';
 import { ApplicationThroughputTool } from './application/throughput/index.js';
@@ -36,20 +47,29 @@ export const PERFORMANCE_TOOL_CLASSES: (new (conn: Connection) => BaseTool)[] = 
   LoadAverageTool,
   CpuSaturationTool,
   CpuSchedulingTool,
+  CpuPerCoreTool,
+  CpuInterruptsTool,
   MemoryUtilizationTool,
   MemoryPressureTool,
+  OomKillsTool,
   DiskThroughputTool,
   DiskSaturationTool,
   FileSystemTool,
   NetworkThroughputTool,
   NetworkErrorsTool,
   NetworkConnectionsTool,
+  NetworkInterfaceErrorsTool,
   KernelMetricsTool,
+  SystemLimitsTool,
   VirtualizationMetricsTool,
   // Application tools
   ProcessCpuTool,
   ProcessMemoryTool,
   ProcessIoTool,
+  ProcessThreadCpuTool,
+  ProcessCpuAffinityTool,
+  ProcessThreadMemoryTool,
+  ProcessOpenFilesTool,
   ThreadingMetricsTool,
   ApplicationLatencyTool,
   ApplicationThroughputTool,

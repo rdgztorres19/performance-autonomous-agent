@@ -72,12 +72,12 @@ export function FormDialog({ formInteraction }: FormDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
       <DialogContent
-        className="sm:max-w-[560px] [&>button]:hidden"
+        className="sm:max-w-[560px] max-h-[85vh] flex flex-col [&>button]:hidden"
         onPointerDownOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
         onInteractOutside={(e) => e.preventDefault()}
       >
-        <DialogHeader className="pb-4 border-b border-border">
+        <DialogHeader className="pb-4 border-b border-border shrink-0">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <MessageSquare className="h-5 w-5 text-primary" />
@@ -93,7 +93,7 @@ export function FormDialog({ formInteraction }: FormDialogProps) {
           </div>
         </DialogHeader>
 
-        <div className="py-4">
+        <div className="flex-1 min-h-0 kt-scrollable-y-auto py-4 pe-1">
           <p className="text-sm text-foreground mb-5 leading-relaxed">
             {formInteraction.context}
           </p>
@@ -122,7 +122,7 @@ export function FormDialog({ formInteraction }: FormDialogProps) {
           </form>
         </div>
 
-        <div className="flex items-center justify-between pt-4 border-t border-border">
+        <div className="flex items-center justify-between pt-4 border-t border-border shrink-0">
           <Button
             type="button"
             variant="outline"

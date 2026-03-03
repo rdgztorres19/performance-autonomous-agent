@@ -57,8 +57,10 @@ export class DiskThroughputTool extends BaseTool {
         devices[name] = {
           readsCompleted: parseInt(parts[3], 10),
           readSectors: parseInt(parts[5], 10),
+          timeReadingMs: parseInt(parts[6], 10),
           writesCompleted: parseInt(parts[7], 10),
           writeSectors: parseInt(parts[9], 10),
+          timeWritingMs: parseInt(parts[10], 10),
           ioInProgress: parseInt(parts[11], 10),
           ioTimeMs: parseInt(parts[12], 10),
         };
@@ -79,6 +81,12 @@ export class DiskThroughputTool extends BaseTool {
       const writeIops = s2['writesCompleted'] - s1['writesCompleted'];
       const readSectors = s2['readSectors'] - s1['readSectors'];
       const writeSectors = s2['writeSectors'] - s1['writeSectors'];
+      const totalIops = readIops + writeIops;
+      const timeReadDelta = (s2['timeReadingMs'] ?? 0) - (s1['timeReadingMs'] ?? 0);
+      const timeWriteDelta = (s2['timeWritingMs'] ?? 0) - (s1['timeWritingMs'] ?? 0);
+      const awaitMs = totalIops > 0
+        ? Math.round((timeReadDelta + timeWriteDelta) / totalIops * 100) / 100
+        : 0;
 
       devices.push({
         device: name,
@@ -86,9 +94,10 @@ export class DiskThroughputTool extends BaseTool {
         writeMBps: Math.round((writeSectors * 512) / 1024 / 1024 * 100) / 100,
         readIops,
         writeIops,
-        totalIops: readIops + writeIops,
+        totalIops,
         readWriteRatio: writeIops > 0 ? Math.round((readIops / writeIops) * 100) / 100 : readIops > 0 ? Infinity : 0,
         ioInProgress: s2['ioInProgress'],
+        awaitMs,
       });
     }
 
