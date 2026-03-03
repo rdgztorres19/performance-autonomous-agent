@@ -60,13 +60,16 @@ export class TerminalSessionService {
       return session;
     }
 
-    // local
+    // local: abrir en la raíz del proyecto cuando el backend corre desde backend/
+    const cwd = process.cwd();
+    const projectRoot = path.resolve(cwd, '..');
+    const useRoot = path.basename(cwd) === 'backend' && fs.existsSync(projectRoot);
     const shell = getLocalShell();
     const ptyProcess = pty.spawn(shell, [], {
       name: 'xterm',
       cols: ptyOpts.cols,
       rows: ptyOpts.rows,
-      cwd: process.cwd(),
+      cwd: useRoot ? projectRoot : cwd,
       env: process.env as Record<string, string>,
     });
     const session: TerminalSession = { stream: ptyProcess, config };

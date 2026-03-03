@@ -11,6 +11,7 @@ import { Logger } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
 import { TerminalSessionService } from './terminal-session.service.js';
 import { TerminalAutocompleteService } from './terminal-autocomplete.service.js';
+import { TerminalAskService } from './terminal-ask.service.js';
 
 @WebSocketGateway({ namespace: 'terminal', cors: { origin: '*' } })
 export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect {
@@ -22,6 +23,7 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   constructor(
     private readonly sessionService: TerminalSessionService,
     private readonly autocompleteService: TerminalAutocompleteService,
+    private readonly askService: TerminalAskService,
   ) {}
 
   handleConnection(client: Socket): void {
@@ -110,6 +112,25 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
       client.emit('terminal:suggestions', { items });
     } catch {
       client.emit('terminal:suggestions', { items: [] });
+    }
+  }
+
+  @SubscribeMessage('terminal:ask')
+  async handleAsk(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { configurationId: string; selectedText: string; question: string },
+  ): Promise<void> {
+    const { configurationId, selectedText, question } = data ?? {};
+    if (!configurationId || selectedText == null || question == null) {
+      client.emit('terminal:askResponse', { error: 'Missing configurationId, selectedText, or question' });
+      return;
+    }
+    try {
+      const result = await this.askService.ask(configurationId, selectedText, question);
+      client.emit('terminal:askResponse', result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      client.emit('terminal:askResponse', { error: msg });
     }
   }
 }

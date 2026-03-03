@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "postinstall": "node -e \"try{const fs=require('fs');const p=require('path');['darwin-arm64','darwin-x64'].forEach(a=>{const f=p.join(__dirname,'node_modules','node-pty','prebuilds',a,'spawn-helper');fs.access(f,(e)=>e||fs.chmodSync(f,0o755));});}catch(_){}\"",
+    "postinstall": "node scripts/fix-node-pty.js",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",

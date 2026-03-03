@@ -7,15 +7,18 @@ import { Configuration } from '../database/entities/index.js';
 
 const MAX_SUGGESTIONS = 5;
 
-const PROMPT = `You are a shell command autocomplete assistant. Given the partial command or line the user has typed, suggest completions.
+const PROMPT = `You are a shell command assistant. The user may type either:
+1. A partial shell command (e.g. "docker ru", "git che") - suggest completions
+2. A natural language description (e.g. "command to open bash in docker container", "list files by size") - suggest full shell commands that accomplish the goal
 
 Rules:
 - Return ONLY a JSON array of strings, e.g. ["suggestion1", "suggestion2"]
 - Maximum ${MAX_SUGGESTIONS} suggestions
-- Suggestions should be complete command continuations, file paths, or arguments
+- For partial commands: suggest complete continuations, file paths, or arguments
+- For natural language: suggest ready-to-run commands (e.g. for "open bash in docker container" -> ["docker exec -it <container_id> bash", "docker run -it <image> bash"])
 - No explanations, only the JSON array
 - If the line is empty or too short, return []
-- Consider common shell commands, flags, and paths`;
+- Commands must be copy-paste ready; use placeholders like <container_id> or <image> when needed`;
 
 @Injectable()
 export class TerminalAutocompleteService {

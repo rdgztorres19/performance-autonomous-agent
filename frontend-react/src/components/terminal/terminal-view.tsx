@@ -3,9 +3,43 @@ import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import '@xterm/xterm/css/xterm.css';
 import { io, Socket } from 'socket.io-client';
-import { WandSparkles, Send, X } from 'lucide-react';
+import { WandSparkles, Send, X, MessageCirclePlus } from 'lucide-react';
 import { environment } from '@/config/environment';
 import { AutocompleteOverlay } from './autocomplete-overlay';
+
+function renderAskResponse(text: string) {
+  const parts: { type: 'text' | 'code'; content: string; lang?: string }[] = [];
+  const regex = /```(\w*)\n?([\s\S]*?)```/g;
+  let lastIndex = 0;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(text)) !== null) {
+    if (m.index > lastIndex) {
+      parts.push({ type: 'text', content: text.slice(lastIndex, m.index) });
+    }
+    parts.push({ type: 'code', content: m[2].trim(), lang: m[1] || undefined });
+    lastIndex = regex.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+  if (parts.length === 0) {
+    parts.push({ type: 'text', content: text });
+  }
+  return parts.map((p, i) =>
+    p.type === 'code' ? (
+      <pre
+        key={i}
+        className="my-2 overflow-x-auto rounded border border-white/20 bg-black/60 px-3 py-2 text-xs font-mono text-gray-200"
+      >
+        <code>{p.content}</code>
+      </pre>
+    ) : (
+      <span key={i} className="whitespace-pre-wrap">
+        {p.content}
+      </span>
+    ),
+  );
+}
 
 interface TerminalViewProps {
   configurationId: string;
@@ -23,9 +57,17 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
   const [suggestionsIndex, setSuggestionsIndex] = useState(0);
   const [showCommandBar, setShowCommandBar] = useState(false);
   const [commandInput, setCommandInput] = useState('');
+  const [hasSelection, setHasSelection] = useState(false);
+  const [showAskPanel, setShowAskPanel] = useState(false);
+  const [askContext, setAskContext] = useState('');
+  const [askQuestion, setAskQuestion] = useState('');
+  const [askResponse, setAskResponse] = useState<string | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
+  const [askLoading, setAskLoading] = useState(false);
   const [requestingSuggestions, setRequestingSuggestions] = useState(false);
   const [suggestionsFromCommandBar, setSuggestionsFromCommandBar] = useState(false);
   const commandInputRef = useRef<HTMLInputElement>(null);
+  const askInputRef = useRef<HTMLInputElement>(null);
   const lastLineRef = useRef('');
   const lastUserInputRef = useRef('');
 
@@ -86,6 +128,17 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
       } else {
         setSuggestions(items);
         setSuggestionsIndex(0);
+      }
+    });
+
+    socket.on('terminal:askResponse', (data: { answer?: string; error?: string }) => {
+      setAskLoading(false);
+      if (data.error) {
+        setAskError(data.error);
+        setAskResponse(null);
+      } else {
+        setAskResponse(data.answer ?? null);
+        setAskError(null);
       }
     });
 
@@ -174,6 +227,40 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
   const executeCommandRef = useRef(executeCommand);
   executeCommandRef.current = executeCommand;
 
+  const openAskPanel = useCallback(() => {
+    const term = terminalRef.current;
+    const text = term?.getSelection()?.trim() ?? '';
+    if (text) {
+      setAskContext(text);
+      setAskQuestion('');
+      setAskResponse(null);
+      setAskError(null);
+      setShowAskPanel(true);
+      setShowCommandBar(false);
+    }
+  }, []);
+
+  const closeAskPanel = useCallback(() => {
+    setShowAskPanel(false);
+    setAskContext('');
+    setAskQuestion('');
+    setAskResponse(null);
+    setAskError(null);
+    terminalRef.current?.clearSelection();
+  }, []);
+
+  const sendAsk = useCallback(() => {
+    const q = askQuestion.trim();
+    if (!q || !askContext) return;
+    setAskLoading(true);
+    setAskError(null);
+    socketRef.current?.emit('terminal:ask', {
+      configurationId,
+      selectedText: askContext,
+      question: q,
+    });
+  }, [configurationId, askQuestion, askContext]);
+
   const sendCommandBar = useCallback(() => {
     const trimmed = commandInput.trim();
     if (!trimmed) return;
@@ -215,6 +302,12 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
   }, [showCommandBar]);
 
   useEffect(() => {
+    if (showAskPanel) {
+      askInputRef.current?.focus();
+    }
+  }, [showAskPanel]);
+
+  useEffect(() => {
     if (!containerRef.current || !configurationId) return;
 
     const term = new Terminal({
@@ -251,6 +344,10 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
     term.onData((data) => {
       setSuggestions([]);
       sendData(data);
+    });
+
+    term.onSelectionChange(() => {
+      setHasSelection(term.hasSelection());
     });
 
     const resizeObserver = new ResizeObserver(() => {
@@ -320,15 +417,28 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
       <div className="relative min-h-0 flex-1">
         <div ref={containerRef} className="h-full w-full" />
         {status === 'ready' && (
-          <button
-            type="button"
-            onClick={() => setShowCommandBar((v) => !v)}
-            className="absolute right-2 top-2 z-20 rounded p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-            title="Command bar (complete current line and execute)"
-            aria-label="Show command bar"
-          >
-            <WandSparkles className={`h-4 w-4 ${showCommandBar ? 'text-primary' : ''}`} />
-          </button>
+          <div className="absolute right-2 top-2 z-20 flex gap-0.5">
+            {hasSelection && !showAskPanel && (
+              <button
+                type="button"
+                onClick={openAskPanel}
+                className="rounded p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                title="Ask about selected context"
+                aria-label="Ask about selection"
+              >
+                <MessageCirclePlus className="h-4 w-4" />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowCommandBar((v) => !v)}
+              className="rounded p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+              title="Command bar (complete current line and execute)"
+              aria-label="Show command bar"
+            >
+              <WandSparkles className={`h-4 w-4 ${showCommandBar ? 'text-primary' : ''}`} />
+            </button>
+          </div>
         )}
       </div>
       {showCommandBar && (
@@ -405,6 +515,62 @@ export function TerminalView({ configurationId, onClose }: TerminalViewProps) {
               <X className="h-4 w-4" />
             </button>
           </div>
+        </div>
+      )}
+      {showAskPanel && (
+        <div className="relative flex shrink-0 flex-col gap-2 border-t border-white/20 bg-black/80 p-2">
+          <div className="flex items-start gap-2">
+            <div className="flex min-w-0 flex-1 flex-col gap-1 rounded border border-white/20 bg-white/5 px-3 py-2">
+              <span className="text-2sm text-muted-foreground">Selected context</span>
+              <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-words text-sm text-white">
+                {askContext}
+              </pre>
+            </div>
+            <button
+              type="button"
+              onClick={closeAskPanel}
+              className="shrink-0 rounded p-2 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+              aria-label="Close"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex gap-2">
+            <input
+              ref={askInputRef}
+              type="text"
+              value={askQuestion}
+              onChange={(e) => setAskQuestion(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') sendAsk();
+                if (e.key === 'Escape') closeAskPanel();
+              }}
+              placeholder="Ask anything about the selected context…"
+              disabled={askLoading}
+              className="flex-1 rounded border border-white/30 bg-black px-3 py-2 text-sm text-white placeholder:text-gray-400 focus:border-primary focus:outline-none disabled:opacity-70"
+            />
+            <button
+              type="button"
+              onClick={sendAsk}
+              disabled={!askQuestion.trim() || askLoading}
+              className="rounded bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            >
+              {askLoading ? '…' : <Send className="h-4 w-4" />}
+            </button>
+          </div>
+          {askError && (
+            <p className="text-sm text-destructive">{askError}</p>
+          )}
+          {askResponse && (
+            <div className="flex flex-col gap-1 rounded border border-white/20 bg-white/5 px-3 py-2">
+              <span className="text-2sm text-muted-foreground">Answer</span>
+              <div className="max-h-48 overflow-y-auto pr-1">
+                <div className="text-sm text-white [&>pre]:my-2 [&>pre]:leading-relaxed [&>span]:leading-relaxed">
+                  {renderAskResponse(askResponse)}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
       {suggestions.length > 0 && !suggestionsFromCommandBar && (
