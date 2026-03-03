@@ -49,6 +49,12 @@ export class Configuration {
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
 
+  @Column({ type: 'varchar', nullable: true })
+  connectionStatus?: 'online' | 'offline' | 'unknown' | 'checking';
+
+  @Column({ type: 'datetime', nullable: true })
+  connectionLastCheckedAt?: Date;
+
   @CreateDateColumn()
   createdAt!: Date;
 

@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, Save } from 'lucide-react';
-import { useCreateConfiguration, useUpdateConfiguration } from '@/api/configurations';
+import { ArrowLeft, Save, Wifi } from 'lucide-react';
+import { useCreateConfiguration, useUpdateConfiguration, useVerifyConnection } from '@/api/configurations';
 import { toast } from 'sonner';
 import type { Configuration } from '@/types';
 
@@ -77,8 +77,9 @@ export function ConfigForm({ config, isNew, onSaved }: ConfigFormProps) {
 function ConfigFormInner({ config, isNew, onSaved }: ConfigFormProps) {
   const createMutation = useCreateConfiguration();
   const updateMutation = useUpdateConfiguration();
+  const verifyMutation = useVerifyConnection();
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<ConfigFormValues>({
+  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<ConfigFormValues>({
     resolver: zodResolver(configSchema),
     defaultValues: buildDefaults(config, isNew),
   });
@@ -106,6 +107,28 @@ function ConfigFormInner({ config, isNew, onSaved }: ConfigFormProps) {
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const handleTestConnection = async () => {
+    const values = watch();
+    if (values.connectionType === 'ssh' && (!values.sshHost?.trim() || !values.sshUsername?.trim())) {
+      toast.error('Host and Username are required to test SSH connection');
+      return;
+    }
+    try {
+      const res = await verifyMutation.mutateAsync({
+        id: config?.id,
+        connectionType: values.connectionType,
+        sshHost: values.sshHost || undefined,
+        sshPort: values.sshPort,
+        sshUsername: values.sshUsername || undefined,
+        sshPassword: values.sshPassword || undefined,
+        sshPrivateKey: values.sshPrivateKey || undefined,
+      });
+      res.success ? toast.success('Connection successful') : toast.error('Connection failed');
+    } catch {
+      toast.error('Connection test failed');
+    }
+  };
 
   return (
     <div className="space-y-5">
@@ -263,6 +286,15 @@ function ConfigFormInner({ config, isNew, onSaved }: ConfigFormProps) {
           <Button type="submit" disabled={isPending}>
             <Save className="mr-1.5 h-4 w-4" />
             {isPending ? 'Saving...' : isNew ? 'Create Configuration' : 'Save Changes'}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleTestConnection}
+            disabled={verifyMutation.isPending || isPending}
+          >
+            <Wifi className="mr-1.5 h-4 w-4" />
+            {verifyMutation.isPending ? 'Testing...' : 'Test Connection'}
           </Button>
           <Button type="button" variant="outline" onClick={onSaved}>
             Cancel

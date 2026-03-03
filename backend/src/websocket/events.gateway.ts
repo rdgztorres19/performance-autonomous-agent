@@ -9,6 +9,7 @@ import {
 } from '@nestjs/websockets';
 import { Logger, OnModuleInit } from '@nestjs/common';
 import { Server, Socket } from 'socket.io';
+import type { ConfigStatusPayload } from '../config/config-status.types.js';
 import { TimelineService } from '../agent/services/timeline.service.js';
 import { ReportService } from '../agent/services/report.service.js';
 import { FormGenerationService } from '../agent/services/form-generation.service.js';
@@ -66,6 +67,10 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect, 
   ): void {
     client.leave(data.sessionId);
     this.logger.log(`Client ${client.id} left session ${data.sessionId}`);
+  }
+
+  broadcastConfigStatus(payload: ConfigStatusPayload[]): void {
+    this.server.emit('config:status', { configs: payload });
   }
 
   @SubscribeMessage('form:submit')

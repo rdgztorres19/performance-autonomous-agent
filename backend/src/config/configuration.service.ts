@@ -77,6 +77,20 @@ export class ConfigurationService {
     await this.configRepo.delete(id);
   }
 
+  async updateConnectionStatus(
+    id: string,
+    status: 'online' | 'offline' | 'unknown' | 'checking',
+  ): Promise<void> {
+    await this.configRepo.update(id, {
+      connectionStatus: status,
+      connectionLastCheckedAt: new Date(),
+    });
+  }
+
+  async getConfigForVerify(id: string): Promise<Configuration> {
+    return this.configRepo.findOneByOrFail({ id });
+  }
+
   toSafeResponse(config: Configuration): Partial<Configuration> {
     const { openaiApiKey, sshPassword, sshPrivateKey, ...safe } = config;
     return {

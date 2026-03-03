@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './client';
-import type { Configuration, CreateConfigDto, UpdateConfigDto } from '../types';
+import type { Configuration, CreateConfigDto, UpdateConfigDto, VerifyConnectionDto } from '../types';
 
 const KEYS = { all: ['configurations'] as const };
 
@@ -41,5 +41,12 @@ export function useDeleteConfiguration() {
   return useMutation({
     mutationFn: (id: string) => api.del(`/config/${id}`),
     onSuccess: () => qc.invalidateQueries({ queryKey: KEYS.all }),
+  });
+}
+
+export function useVerifyConnection() {
+  return useMutation({
+    mutationFn: (dto: VerifyConnectionDto) =>
+      api.post<{ success: boolean; connectionStatus: string }>('/config/verify', dto),
   });
 }

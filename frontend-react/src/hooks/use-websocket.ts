@@ -1,4 +1,5 @@
-import { useEffect, useCallback, useState, useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../config/environment';
 import { useSessionStore } from './use-session-store';
@@ -26,6 +27,7 @@ function subscribeStatus(listener: () => void) {
 
 export function useWebSocket() {
   const status = useSyncExternalStore(subscribeStatus, getStatus);
+  const queryClient = useQueryClient();
 
   const appendTimeline = useSessionStore((s) => s.appendTimeline);
   const appendReport = useSessionStore((s) => s.appendReport);
@@ -61,9 +63,12 @@ export function useWebSocket() {
     socket.on('form:request', (form: FormInteraction) => {
       useSessionStore.getState().appendForm(form);
     });
+    socket.on('config:status', () => {
+      queryClient.invalidateQueries({ queryKey: ['configurations'] });
+    });
 
     sharedSocket = socket;
-  }, []);
+  }, [queryClient]);
 
   const disconnect = useCallback(() => {
     if (sharedSocket) {

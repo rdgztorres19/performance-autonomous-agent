@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Container } from '@/components/common/container';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,9 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, History } from 'lucide-react';
+import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { useConfigurations, useDeleteConfiguration } from '@/api/configurations';
+import { useWebSocket } from '@/hooks/use-websocket';
 import { ConfigForm } from './components/config-form';
 import { toast } from 'sonner';
 import type { Configuration } from '@/types';
@@ -20,7 +21,12 @@ import type { Configuration } from '@/types';
 export function ConfigurationPage() {
   const { data: configs, isLoading } = useConfigurations();
   const deleteMutation = useDeleteConfiguration();
+  const ws = useWebSocket();
   const [selected, setSelected] = useState<Configuration | null>(null);
+
+  useEffect(() => {
+    ws.connect();
+  }, [ws.connect]);
   const [isNew, setIsNew] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Configuration | null>(null);
 
@@ -92,6 +98,9 @@ export function ConfigurationPage() {
                         <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-3.5 min-w-[200px]">
                           Name
                         </th>
+                        <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-3.5 min-w-[100px]">
+                          Status
+                        </th>
                         <th className="text-left text-xs font-medium text-muted-foreground uppercase tracking-wider px-5 py-3.5 min-w-[130px]">
                           Connection
                         </th>
@@ -123,6 +132,26 @@ export function ConfigurationPage() {
                               </div>
                               <span className="font-medium text-foreground">{config.name}</span>
                             </div>
+                          </td>
+                          <td className="px-5 py-3.5">
+                            {config.connectionStatus === 'online' ? (
+                              <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400">
+                                <Wifi className="h-3.5 w-3.5" />
+                                <span className="text-xs font-medium">Online</span>
+                              </div>
+                            ) : config.connectionStatus === 'offline' ? (
+                              <div className="flex items-center gap-1.5 text-destructive">
+                                <WifiOff className="h-3.5 w-3.5" />
+                                <span className="text-xs font-medium">Offline</span>
+                              </div>
+                            ) : config.connectionStatus === 'checking' ? (
+                              <div className="flex items-center gap-1.5 text-muted-foreground">
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                <span className="text-xs font-medium">Checking</span>
+                              </div>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
                           </td>
                           <td className="px-5 py-3.5">
                             <Badge
