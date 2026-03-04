@@ -118,15 +118,26 @@ export class TerminalGateway implements OnGatewayConnection, OnGatewayDisconnect
   @SubscribeMessage('terminal:ask')
   async handleAsk(
     @ConnectedSocket() client: Socket,
-    @MessageBody() data: { configurationId: string; selectedText: string; question: string },
+    @MessageBody()
+    data: {
+      configurationId: string;
+      selectedText: string;
+      question: string;
+      conversationHistory?: { role: 'user' | 'assistant'; content: string }[];
+    },
   ): Promise<void> {
-    const { configurationId, selectedText, question } = data ?? {};
+    const { configurationId, selectedText, question, conversationHistory } = data ?? {};
     if (!configurationId || selectedText == null || question == null) {
       client.emit('terminal:askResponse', { error: 'Missing configurationId, selectedText, or question' });
       return;
     }
     try {
-      const result = await this.askService.ask(configurationId, selectedText, question);
+      const result = await this.askService.ask(
+        configurationId,
+        selectedText,
+        question,
+        conversationHistory,
+      );
       client.emit('terminal:askResponse', result);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);

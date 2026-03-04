@@ -8,6 +8,7 @@ export enum ToolCategory {
   KERNEL = 'kernel',
   VIRTUALIZATION = 'virtualization',
   FILE_SYSTEM = 'file_system',
+  SHELL = 'shell',
   APPLICATION_LATENCY = 'application_latency',
   APPLICATION_THROUGHPUT = 'application_throughput',
   APPLICATION_ERRORS = 'application_errors',

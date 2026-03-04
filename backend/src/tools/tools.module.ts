@@ -25,6 +25,7 @@ import {
   NetworkInterfaceErrorsTool,
 } from './system/network/index.js';
 import { KernelMetricsTool, SystemLimitsTool } from './system/kernel/index.js';
+import { ReadonlyCommandTool } from './system/shell/index.js';
 import { VirtualizationMetricsTool } from './system/virtualization/index.js';
 import {
   ProcessCpuTool,
@@ -61,6 +62,7 @@ export const PERFORMANCE_TOOL_CLASSES: (new (conn: Connection) => BaseTool)[] = 
   NetworkInterfaceErrorsTool,
   KernelMetricsTool,
   SystemLimitsTool,
+  ReadonlyCommandTool,
   VirtualizationMetricsTool,
   // Application tools
   ProcessCpuTool,

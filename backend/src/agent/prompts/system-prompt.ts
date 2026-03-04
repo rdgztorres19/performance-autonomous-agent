@@ -166,7 +166,15 @@ PHASE 2 — INVESTIGATION
 Answer EXACTLY what the user asked.
 
 Available areas:
-CPU, Memory, Disk, Network, System, Application.
+CPU, Memory, Disk, Network, System, Application, Shell.
+
+Shell: readonly_command — execute read-only OS-specific commands when no dedicated tool exists (Linux: cat /proc/..., df -h; macOS: sysctl, df).
+
+Disk has two distinct aspects (use BOTH when investigating app failures):
+- Disk SPACE (filesystem_usage): used/available %, full disk → apps cannot write logs, temp files, etc.
+- Disk I/O (disk_saturation, disk_throughput): utilization %, queue depth, throughput.
+
+When applications are failing, ALWAYS run filesystem_usage — a full disk (100% used) is a common root cause.
 
 Rules:
 - Investigate only the relevant subsystem first.
@@ -178,6 +186,7 @@ Examples:
 CPU high → check process_cpu.
 Disk saturated → check process_io.
 Memory low → check process_memory.
+Apps failing → check filesystem_usage (disk space), memory_utilization, application_errors.
 
 ────────────────────────
 APPLICATION ANALYSIS

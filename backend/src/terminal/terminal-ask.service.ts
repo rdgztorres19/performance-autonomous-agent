@@ -2,12 +2,15 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ChatOpenAI } from '@langchain/openai';
-import { HumanMessage, SystemMessage } from '@langchain/core/messages';
+import type { BaseMessage } from '@langchain/core/messages';
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
 import { Configuration } from '../database/entities/index.js';
 
-const MAX_CONTEXT_LENGTH = 2000;
+const MAX_CONTEXT_LENGTH = 6000;
 
 const SYSTEM_PROMPT = `You are a helpful assistant that explains terminal output. The user has selected text from a terminal session and is asking a question about it.
+
+The context may include multiple sections (e.g. "--- New selection (output/selection) ---") when the user adds new terminal output to the conversation. Use this for step-by-step guidance: they may have run a command you suggested and are now asking about the result.
 
 When giving recommendations or fixes:
 - Always include the exact command SYNTAX the user can copy-paste (e.g., \`command --flag arg\`)
@@ -32,6 +35,7 @@ export class TerminalAskService {
     configurationId: string,
     selectedText: string,
     question: string,
+    conversationHistory?: { role: 'user' | 'assistant'; content: string }[],
   ): Promise<{ answer: string } | { error: string }> {
     const config = await this.configRepo.findOneByOrFail({ id: configurationId });
     if (!config.openaiApiKey?.trim()) {
@@ -43,9 +47,11 @@ export class TerminalAskService {
       return { error: 'Please enter a question.' };
     }
 
+    const trimmed = selectedText?.trim() ?? '';
     const truncatedContext =
-      selectedText?.trim().slice(0, MAX_CONTEXT_LENGTH) ??
-      '';
+      trimmed.length > MAX_CONTEXT_LENGTH
+        ? trimmed.slice(-MAX_CONTEXT_LENGTH)
+        : trimmed;
     if (truncatedContext.length === 0) {
       return { error: 'No context selected.' };
     }
@@ -56,13 +62,25 @@ export class TerminalAskService {
       temperature: 0.3,
     });
 
-    const userMessage = `Selected terminal output:\n\`\`\`\n${truncatedContext}\n\`\`\`\n\nUser question: ${trimmedQuestion}`;
+    const baseContext = `Selected terminal output:\n\`\`\`\n${truncatedContext}\n\`\`\``;
+    const hasHistory = Array.isArray(conversationHistory) && conversationHistory.length > 0;
+
+    const historyMessages: BaseMessage[] = (conversationHistory ?? []).flatMap((m) =>
+      m.role === 'user'
+        ? ([new HumanMessage(m.content)] as BaseMessage[])
+        : ([new AIMessage(m.content)] as BaseMessage[]),
+    );
+
+    const messages: BaseMessage[] = [
+      new SystemMessage(SYSTEM_PROMPT),
+      ...historyMessages,
+      new HumanMessage(
+        hasHistory ? trimmedQuestion : `${baseContext}\n\nUser question: ${trimmedQuestion}`,
+      ),
+    ];
 
     try {
-      const response = await llm.invoke([
-        new SystemMessage(SYSTEM_PROMPT),
-        new HumanMessage(userMessage),
-      ]);
+      const response = await llm.invoke(messages);
 
       const answer =
         typeof response.content === 'string'
