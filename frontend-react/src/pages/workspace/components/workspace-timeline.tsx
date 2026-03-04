@@ -18,6 +18,7 @@ import {
   MessageSquare,
   ChevronRight,
   BarChart3,
+  Loader2,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -37,6 +38,7 @@ const typeConfig: Record<
 
 export function WorkspaceTimeline() {
   const timeline = useSessionStore((s) => s.timeline);
+  const activeSession = useSessionStore((s) => s.activeSession);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [metricsEntry, setMetricsEntry] = useState<{
@@ -57,11 +59,25 @@ export function WorkspaceTimeline() {
     });
 
   if (timeline.length === 0) {
+    const isWaitingForAgent =
+      activeSession?.status === 'running';
     return (
       <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
-        <Info className="h-8 w-8 mb-3 opacity-40" />
-        <p className="text-sm">No activity yet</p>
-        <p className="text-xs mt-0.5 opacity-70">Run a scan to see agent activity here.</p>
+        {isWaitingForAgent ? (
+          <>
+            <Loader2 className="h-8 w-8 mb-3 animate-spin opacity-60" />
+            <p className="text-sm">Connecting and preparing agent...</p>
+            <p className="text-xs mt-0.5 opacity-70">
+              The agent is initializing. You will see activity here shortly.
+            </p>
+          </>
+        ) : (
+          <>
+            <Info className="h-8 w-8 mb-3 opacity-40" />
+            <p className="text-sm">No activity yet</p>
+            <p className="text-xs mt-0.5 opacity-70">Run a scan to see agent activity here.</p>
+          </>
+        )}
       </div>
     );
   }

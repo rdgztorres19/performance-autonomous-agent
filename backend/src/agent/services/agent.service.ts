@@ -76,9 +76,11 @@ export class AgentService {
     });
 
     try {
+      await this.timelineService.logInfo(sessionId, 'Connecting to target system...');
       await connection.connect();
       await this.timelineService.logInfo(sessionId, `Connected via ${config.connectionType}`);
 
+      await this.timelineService.logInfo(sessionId, 'Initializing agent and tools...');
       this.registerPerformanceTools(connection);
 
       if (!config.openaiApiKey) {
@@ -121,6 +123,10 @@ export class AgentService {
         `Agent initialized with ${allTools.length} tools`,
       );
 
+      await this.timelineService.logInfo(
+        sessionId,
+        'Preparing initial questions — contacting AI...',
+      );
       await agent.invoke(
         {
           messages: [

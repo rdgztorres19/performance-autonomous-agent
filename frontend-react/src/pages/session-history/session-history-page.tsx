@@ -55,7 +55,7 @@ export function SessionHistoryPage() {
 
     if (session.status === 'running') {
       ws.connect();
-      setTimeout(() => ws.joinSession(session.id), 500);
+      setTimeout(() => ws.joinSession(session.id), 200);
     }
 
     navigate('/');

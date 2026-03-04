@@ -25,6 +25,10 @@ export class RequestUserInfoTool extends BaseAgentTool {
   ): Promise<string> {
     const requestContext = input['context'] as string;
 
+    await agentContext.timelineService.logInfo(
+      agentContext.sessionId,
+      'Generating questionnaire for your context...',
+    );
     const form = await agentContext.formGenerationService.generateForm(
       agentContext.llm,
       agentContext.sessionId,

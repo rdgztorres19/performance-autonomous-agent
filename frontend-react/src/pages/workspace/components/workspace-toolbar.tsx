@@ -63,7 +63,7 @@ export function WorkspaceToolbar() {
     const session = await startMutation.mutateAsync(configId);
     setActiveSession(session);
     ws.connect();
-    setTimeout(() => ws.joinSession(session.id), 500);
+    setTimeout(() => ws.joinSession(session.id), 200);
     const [tl, rp, fm] = await Promise.all([
       api.get<TimelineEntry[]>(`/sessions/${session.id}/timeline`),
       api.get<ProblemReport[]>(`/sessions/${session.id}/reports`),

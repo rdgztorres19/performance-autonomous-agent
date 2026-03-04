@@ -70,7 +70,7 @@ export function SessionControl() {
     setActiveSession(session);
 
     ws.connect();
-    setTimeout(() => ws.joinSession(session.id), 500);
+    setTimeout(() => ws.joinSession(session.id), 200);
 
     const [timeline, reports, forms] = await Promise.all([
       api.get<TimelineEntry[]>(`/sessions/${session.id}/timeline`),
