@@ -1,0 +1,13 @@
+services:
+  ubuntu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ubuntu-python-node-env
+    ports:
+      - "2222:22"
+    volumes:
+      # Monta los scripts de test en la raíz del usuario (root)
+      - ../test/scripts:/root
+    stdin_open: true
+    tty: true
