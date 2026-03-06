@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/
 import { ConfigurationService, CreateConfigDto, UpdateConfigDto } from '../../config/configuration.service.js';
 import { ConnectionVerificationService } from '../../config/connection-verification.service.js';
 import { MetricsCollectorService } from '../../metrics/metrics-collector.service.js';
+import { PerformanceToolsService } from '../../tools/performance-tools.service.js';
 import type { VerifyInput } from '../../config/connection-verification.service.js';
 
 @Controller('api/config')
@@ -10,6 +11,7 @@ export class ConfigurationController {
     private readonly configService: ConfigurationService,
     private readonly verificationService: ConnectionVerificationService,
     private readonly metricsCollector: MetricsCollectorService,
+    private readonly performanceTools: PerformanceToolsService,
   ) {}
 
   @Post('verify')
@@ -63,6 +65,16 @@ export class ConfigurationController {
   @Get(':id/processes')
   async getProcesses(@Param('id') id: string) {
     return this.metricsCollector.listProcesses(id);
+  }
+
+  @Get(':id/tools')
+  async getPerformanceTools(@Param('id') id: string) {
+    return this.performanceTools.getToolsStatus(id);
+  }
+
+  @Post(':id/tools/:toolId/install')
+  async installPerformanceTool(@Param('id') id: string, @Param('toolId') toolId: string) {
+    return this.performanceTools.installTool(id, toolId);
   }
 
   @Post()

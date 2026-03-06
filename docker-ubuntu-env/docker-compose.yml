@@ -4,6 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: ubuntu-python-node-env
+    # Permisos amplios: perf, strace, pidstat, iotop, nethogs requieren acceso al kernel/procesos
+    privileged: true
     ports:
       - "2222:22"
     volumes:

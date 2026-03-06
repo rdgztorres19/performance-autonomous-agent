@@ -11,7 +11,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, Wifi, WifiOff, Loader2, Terminal } from 'lucide-react';
+import { Plus, Pencil, Trash2, Server, Monitor, Key, Shield, Wifi, WifiOff, Loader2, Terminal, Wrench } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useConfigurations, useDeleteConfiguration } from '@/api/configurations';
 import { useWebSocket } from '@/hooks/use-websocket';
 import { ConfigForm } from './components/config-form';
@@ -20,6 +21,7 @@ import { toast } from 'sonner';
 import type { Configuration } from '@/types';
 
 export function ConfigurationPage() {
+  const navigate = useNavigate();
   const { data: configs, isLoading } = useConfigurations();
   const deleteMutation = useDeleteConfiguration();
   const ws = useWebSocket();
@@ -191,6 +193,15 @@ export function ConfigurationPage() {
                           </td>
                           <td className="px-5 py-3.5 text-right">
                             <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => navigate(`/configuration/${config.id}/tools`)}
+                                title="Performance Tools"
+                              >
+                                <Wrench className="h-3.5 w-3.5" />
+                              </Button>
                               <Button
                                 variant="ghost"
                                 size="icon"

@@ -8,6 +8,9 @@ const DashboardPage = lazy(() =>
 const ConfigurationPage = lazy(() =>
   import('@/pages/configuration/configuration-page').then((m) => ({ default: m.ConfigurationPage })),
 );
+const ConfigToolsPage = lazy(() =>
+  import('@/pages/configuration/config-tools-page').then((m) => ({ default: m.ConfigToolsPage })),
+);
 const SessionHistoryPage = lazy(() =>
   import('@/pages/session-history/session-history-page').then((m) => ({
     default: m.SessionHistoryPage,
@@ -27,6 +30,7 @@ export function AppRoutingSetup() {
         <Route index element={<WorkspacePage />} />
         <Route path="/sessions" element={<SessionHistoryPage />} />
         <Route path="/configuration" element={<ConfigurationPage />} />
+        <Route path="/configuration/:configId/tools" element={<ConfigToolsPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/metrics" element={<MetricsPage />} />
       </Route>

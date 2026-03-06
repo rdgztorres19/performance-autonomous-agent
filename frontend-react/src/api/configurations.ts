@@ -50,3 +50,30 @@ export function useVerifyConnection() {
       api.post<{ success: boolean; connectionStatus: string }>('/config/verify', dto),
   });
 }
+
+export interface PerformanceToolStatus {
+  id: string;
+  name: string;
+  category: string;
+  package: string;
+  checkCommand: string;
+  installed: boolean;
+  description: string;
+}
+
+export function usePerformanceTools(configId: string | null) {
+  return useQuery({
+    queryKey: ['config', configId, 'tools'],
+    queryFn: () => api.get<PerformanceToolStatus[]>(`/config/${configId}/tools`),
+    enabled: !!configId,
+  });
+}
+
+export function useInstallPerformanceTool() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ configId, toolId }: { configId: string; toolId: string }) =>
+      api.post<{ success: boolean; message: string }>(`/config/${configId}/tools/${toolId}/install`),
+    onSuccess: (_, { configId }) => qc.invalidateQueries({ queryKey: ['config', configId, 'tools'] }),
+  });
+}
