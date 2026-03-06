@@ -2,11 +2,12 @@ import { Module } from '@nestjs/common';
 import { AgentModule } from '../agent/agent.module.js';
 import { ConfigModule } from '../config/config.module.js';
 import { DatabaseModule } from '../database/database.module.js';
+import { MetricsModule } from '../metrics/metrics.module.js';
+
 import { ConfigurationController } from './controllers/configuration.controller.js';
 import { SessionController } from './controllers/session.controller.js';
-
 @Module({
-  imports: [AgentModule, ConfigModule, DatabaseModule],
+  imports: [AgentModule, ConfigModule, DatabaseModule, MetricsModule],
   controllers: [ConfigurationController, SessionController],
 })
 export class ApiModule {}

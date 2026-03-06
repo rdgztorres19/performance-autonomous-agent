@@ -16,6 +16,9 @@ const SessionHistoryPage = lazy(() =>
 const WorkspacePage = lazy(() =>
   import('@/pages/workspace/workspace-page').then((m) => ({ default: m.WorkspacePage })),
 );
+const MetricsPage = lazy(() =>
+  import('@/pages/metrics/metrics-page').then((m) => ({ default: m.MetricsPage })),
+);
 
 export function AppRoutingSetup() {
   return (
@@ -25,6 +28,7 @@ export function AppRoutingSetup() {
         <Route path="/sessions" element={<SessionHistoryPage />} />
         <Route path="/configuration" element={<ConfigurationPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
+        <Route path="/metrics" element={<MetricsPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -1,4 +1,4 @@
-import { LayoutDashboard, History, Settings, Terminal } from 'lucide-react';
+import { LayoutDashboard, History, Settings, Terminal, BarChart3 } from 'lucide-react';
 import type { MenuConfig } from './types';
 
 export const MENU_SIDEBAR: MenuConfig = [
@@ -11,6 +11,11 @@ export const MENU_SIDEBAR: MenuConfig = [
     title: 'Dashboard',
     icon: LayoutDashboard,
     path: '/dashboard',
+  },
+  {
+    title: 'Metrics',
+    icon: BarChart3,
+    path: '/metrics',
   },
   {
     title: 'Session History',

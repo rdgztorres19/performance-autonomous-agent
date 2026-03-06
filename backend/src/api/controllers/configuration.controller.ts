@@ -1,6 +1,7 @@
-import { Controller, Get, Post, Put, Delete, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query } from '@nestjs/common';
 import { ConfigurationService, CreateConfigDto, UpdateConfigDto } from '../../config/configuration.service.js';
 import { ConnectionVerificationService } from '../../config/connection-verification.service.js';
+import { MetricsCollectorService } from '../../metrics/metrics-collector.service.js';
 import type { VerifyInput } from '../../config/connection-verification.service.js';
 
 @Controller('api/config')
@@ -8,6 +9,7 @@ export class ConfigurationController {
   constructor(
     private readonly configService: ConfigurationService,
     private readonly verificationService: ConnectionVerificationService,
+    private readonly metricsCollector: MetricsCollectorService,
   ) {}
 
   @Post('verify')
@@ -48,6 +50,19 @@ export class ConfigurationController {
   async findById(@Param('id') id: string) {
     const config = await this.configService.findById(id);
     return this.configService.toSafeResponse(config);
+  }
+
+  @Get(':id/metrics')
+  async getMetrics(@Param('id') id: string, @Query('pid') pid?: string) {
+    const targetPid = pid ? parseInt(pid, 10) : undefined;
+    return this.metricsCollector.collect(id, {
+      targetPid: Number.isFinite(targetPid) ? targetPid : undefined,
+    });
+  }
+
+  @Get(':id/processes')
+  async getProcesses(@Param('id') id: string) {
+    return this.metricsCollector.listProcesses(id);
   }
 
   @Post()

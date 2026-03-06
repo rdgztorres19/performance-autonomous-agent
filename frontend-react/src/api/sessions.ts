@@ -2,6 +2,13 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { api } from './client';
 import type { Session } from '../types';
 
+export function useSessions() {
+  return useQuery({
+    queryKey: ['sessions'],
+    queryFn: () => api.get<Session[]>('/sessions'),
+  });
+}
+
 export function useSession(id: string | null) {
   return useQuery({
     queryKey: ['session', id],
